@@ -2,28 +2,27 @@ name: Code Quality Checks
 
 on:
     push:
-      branches:
-        - main
+        branches:
+            - main
     pull_request:
-      branches:
-        - main
-
+        branches:
+            - main
 
 jobs:
-  lint-and-format:
-    runs-on: ubuntu-latest
+    lint-and-format:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+            - name: Install dependencies
+              run: npm install
 
-      - name: Run ESLint check
-        run: npm run lint
+            - name: Run ESLint check
+              run: npm run lint
