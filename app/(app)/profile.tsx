@@ -1,11 +1,12 @@
 import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/contextes/AuthContext'
 import { signOut } from '@/utils/supabase'
 import { router } from 'expo-router'
-import Icon from 'react-native-vector-icons/Ionicons' // Importing Icon component
+import Icon from 'react-native-vector-icons/Ionicons'
 
-export default function AccountScreen() {
+export default function ProfileScreen() {
     const { user } = useAuth()
 
     const handleSignOut = async () => {
@@ -18,7 +19,7 @@ export default function AccountScreen() {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             {/* Icon added above the title */}
             <Icon name="person-circle-outline" size={80} color="#4CAF50" />
             <Text style={styles.title}>{user?.email}</Text>
@@ -27,7 +28,7 @@ export default function AccountScreen() {
             <TouchableOpacity style={styles.button} onPress={handleSignOut}>
                 <Text style={styles.buttonText}>Logout</Text>
             </TouchableOpacity>
-        </View>
+        </SafeAreaView>
     )
 }
 
