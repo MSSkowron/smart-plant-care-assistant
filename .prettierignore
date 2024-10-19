@@ -1,0 +1,5 @@
+.expo
+node_modules
+.eslintrc.js
+expo-env.d.ts
+README.md
