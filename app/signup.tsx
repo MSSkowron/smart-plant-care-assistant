@@ -29,12 +29,14 @@ const SignUpScreen = () => {
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
+                autoComplete="email"
                 style={styles.input}
             />
             <TextInput
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
+                autoComplete="new-password"
                 secureTextEntry
                 style={styles.input}
             />
@@ -42,6 +44,7 @@ const SignUpScreen = () => {
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
+                autoComplete="new-password"
                 secureTextEntry
                 style={styles.input}
             />

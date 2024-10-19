@@ -23,12 +23,14 @@ const SignInScreen = () => {
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
+                autoComplete="email"
                 style={styles.input}
             />
             <TextInput
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
+                autoComplete="current-password"
                 secureTextEntry
                 style={styles.input}
             />
