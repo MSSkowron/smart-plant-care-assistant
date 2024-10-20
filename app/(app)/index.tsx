@@ -7,7 +7,11 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text>Welcome home {user?.email}!</Text>
+            <Text>Welcome {user?.email}!</Text>
+            <Text>
+                A main screen summarizing key details, including plant
+                statistics, upcoming tasks (like watering), and quick actions.
+            </Text>
         </SafeAreaView>
     )
 }

@@ -1,7 +1,8 @@
 import { signIn } from '@/utils/supabase'
 import { Link, router } from 'expo-router'
 import React, { useState } from 'react'
-import { Button, TextInput, View, Text, StyleSheet } from 'react-native'
+import { Button, TextInput, Text, StyleSheet } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 const SignInScreen = () => {
     const [email, setEmail] = useState('')
@@ -18,7 +19,7 @@ const SignInScreen = () => {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <TextInput
                 placeholder="Email"
                 value={email}
@@ -41,7 +42,7 @@ const SignInScreen = () => {
                     Don't have an account? Sign Up
                 </Text>
             </Link>
-        </View>
+        </SafeAreaView>
     )
 }
 

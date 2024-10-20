@@ -24,15 +24,21 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
+                name="plants"
+                options={{
+                    title: 'My Plants',
+                }}
+            />
+            <Tabs.Screen
                 name="explore"
                 options={{
                     title: 'Explore',
                 }}
             />
             <Tabs.Screen
-                name="profile"
+                name="settings"
                 options={{
-                    title: 'Profile',
+                    title: 'Settings',
                 }}
             />
         </Tabs>

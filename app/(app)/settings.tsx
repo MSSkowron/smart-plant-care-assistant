@@ -20,11 +20,14 @@ export default function ProfileScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Icon added above the title */}
             <Icon name="person-circle-outline" size={80} color="#4CAF50" />
             <Text style={styles.title}>{user?.email}</Text>
 
-            {/* Updated button with custom style */}
+            <Text>
+                A place where users can manage their profile, authentication,
+                app preferences and notifications.
+            </Text>
+
             <TouchableOpacity style={styles.button} onPress={handleSignOut}>
                 <Text style={styles.buttonText}>Logout</Text>
             </TouchableOpacity>
