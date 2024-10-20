@@ -1,6 +1,6 @@
 import { signIn } from '@/utils/supabase'
 import { Link, router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import {
     TextInput,
     View,
@@ -26,25 +26,6 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
-
-    useEffect(() => {
-        const mode = process.env.EXPO_PUBLIC_MODE
-        const signInAndRedirect = async () => {
-            if (mode === 'dev') {
-                try {
-                    await signIn(
-                        process.env.EXPO_PUBLIC_MODE_DEV_EMAIL || '',
-                        process.env.EXPO_PUBLIC_MODE_DEV_PASSWORD || '',
-                    )
-                    router.replace('/')
-                } catch (error) {
-                    console.error('Error during sign-in:', error)
-                }
-            }
-        }
-
-        signInAndRedirect()
-    }, [])
 
     const handleSignIn = async () => {
         setError(null)
