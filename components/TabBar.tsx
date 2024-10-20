@@ -8,7 +8,7 @@ const TabBar: React.FC<BottomTabBarProps> = ({
     descriptors,
     navigation,
 }) => {
-    const primaryColor = '#0891b2'
+    const primaryColor = '#228B22'
     const greyColor = '#737373'
 
     return (
