@@ -73,7 +73,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         placeholder={'Email'}
                         keyboardType={'email-address'}
                         style={{ flex: 1, paddingVertical: 0 }}
-                        secureTextEntry={true}
                         value={email}
                         onChangeText={setEmail}
                         autoComplete="email"
