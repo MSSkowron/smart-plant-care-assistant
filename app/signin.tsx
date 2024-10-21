@@ -7,6 +7,8 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    ActivityIndicator,
+    Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
@@ -25,13 +27,25 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SignIn'>
 const SignInScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const handleSignIn = async () => {
+        setIsLoading(true)
+
         try {
+            if (email === '' || password === '') {
+                throw new Error('Email and password fields cannot be empty')
+            }
             await signIn(email, password)
             router.replace('/')
         } catch (e) {
-            alert(String(e))
+            const errorMessage =
+                String(e)?.replace(/^Error:\s*/, '') ||
+                'An unexpected error occurred. Please try again.'
+
+            Alert.alert('Login failed', errorMessage, [{ text: 'OK' }])
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -111,6 +125,11 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             </View>
+            {isLoading && (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={'#228B22'} />
+                </View>
+            )}
         </SafeAreaView>
     )
 }
@@ -161,6 +180,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     registerLinkButton: { color: '#228B22', fontWeight: '700' },
+    loadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 })
 
 export default SignInScreen

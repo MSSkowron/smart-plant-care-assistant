@@ -7,6 +7,8 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    ActivityIndicator,
+    Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
@@ -26,18 +28,32 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const handleSignUp = async () => {
+        setIsLoading(true)
+
         if (password !== confirmPassword) {
             alert('Passwords do not match')
             return
         }
 
         try {
+            if (email === '' || password === '' || confirmPassword === '') {
+                throw new Error(
+                    'Email, password and confirm password fields cannot be empty',
+                )
+            }
             await signUp(email, password)
             router.replace('/')
         } catch (e) {
-            alert(String(e))
+            const errorMessage =
+                String(e)?.replace(/^Error:\s*/, '') ||
+                'An unexpected error occurred. Please try again.'
+
+            Alert.alert('Register failed', errorMessage, [{ text: 'OK' }])
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -135,6 +151,11 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             </View>
+            {isLoading && (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={'#228B22'} />
+                </View>
+            )}
         </SafeAreaView>
     )
 }
@@ -185,6 +206,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     registerLinkButton: { color: '#228B22', fontWeight: '700' },
+    loadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 })
 
 export default SignUpScreen
