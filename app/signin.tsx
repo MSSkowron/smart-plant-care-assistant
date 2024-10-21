@@ -25,16 +25,13 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SignIn'>
 const SignInScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [error, setError] = useState<string | null>(null)
 
     const handleSignIn = async () => {
-        setError(null)
-
         try {
             await signIn(email, password)
             router.replace('/')
         } catch (e) {
-            setError(String(e))
+            alert(String(e))
         }
     }
 
@@ -92,8 +89,6 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
                         autoComplete="current-password"
                     />
                 </View>
-
-                {error && <Text style={styles.errorText}>{error}</Text>}
 
                 <TouchableOpacity
                     onPress={handleSignIn}

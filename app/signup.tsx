@@ -26,11 +26,10 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [error, setError] = useState<string | null>(null)
 
     const handleSignUp = async () => {
         if (password !== confirmPassword) {
-            setError('Passwords do not match')
+            alert('Passwords do not match')
             return
         }
 
@@ -38,7 +37,7 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
             await signUp(email, password)
             router.replace('/')
         } catch (e) {
-            setError(String(e))
+            alert(String(e))
         }
     }
 
@@ -114,8 +113,6 @@ const SignUpScreen: React.FC<Props> = ({ navigation }) => {
                         autoComplete="new-password"
                     />
                 </View>
-
-                {error && <Text style={styles.errorText}>{error}</Text>}
 
                 <TouchableOpacity
                     onPress={handleSignUp}
