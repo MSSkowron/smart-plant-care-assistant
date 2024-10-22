@@ -7,4 +7,5 @@ export const icons = {
         <MaterialCommunityIcons name="flower" size={26} {...props} />
     ),
     settings: (props) => <Feather name="settings" size={26} {...props} />,
+    new_plant: (props) => <Feather name="settings" size={26} {...props} />,
 }
