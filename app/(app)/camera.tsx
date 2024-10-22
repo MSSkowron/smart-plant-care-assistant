@@ -14,7 +14,7 @@ export default function CameraComponent() {
     const [permissionCamera, requestCameraPermission] = useCameraPermissions()
     const [picture, setPicture] = useState<CameraCapturedPicture | undefined>()
 
-    let camera: CameraView = useRef<CameraView>(null)
+    const camera = useRef<CameraView | null>(null)
 
     if (!permissionCamera) {
         return <View />
@@ -26,10 +26,9 @@ export default function CameraComponent() {
                 <Text style={styles.message}>
                     We need your permission to show the camera
                 </Text>
-
                 <Button
                     onPress={requestCameraPermission}
-                    title="grant permission"
+                    title="Grant Permission"
                 />
             </View>
         )
@@ -38,18 +37,51 @@ export default function CameraComponent() {
     if (picture) {
         return (
             <View style={styles.container}>
-                <Image
-                    source={picture.uri}
-                    style={styles.image}
-                    contentFit="cover"
-                ></Image>
+                <View style={styles.imageContainer}>
+                    <Image
+                        source={{ uri: picture.uri }}
+                        style={styles.image}
+                        contentFit="cover"
+                    />
+                </View>
+                <View style={styles.cameraButtonsContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.cameraButton,
+                            { backgroundColor: '#f44336' },
+                        ]}
+                        onPress={() => setPicture(undefined)}
+                    >
+                        <Text style={styles.cameraButtonText}>Retake</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.cameraButton,
+                            { backgroundColor: '#4CAF50' },
+                        ]}
+                        onPress={() => {
+                            console.log('TODO: save picture...')
+                        }}
+                    >
+                        <Text style={styles.cameraButtonText}>Save</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         )
     }
 
     const takePicture = async () => {
-        const photo: any = await camera.current.takePictureAsync({ quality: 0 })
-        setPicture(photo)
+        if (camera.current) {
+            try {
+                const photo = await camera.current.takePictureAsync({
+                    quality: 0,
+                })
+                setPicture(photo)
+            } catch (error) {
+                console.error('Error taking picture:', error)
+            }
+        }
     }
 
     const toggleCameraFacing = () => {
@@ -80,6 +112,8 @@ export default function CameraComponent() {
 
 const styles = StyleSheet.create({
     image: {
+        borderRadius: 10,
+        overflow: 'hidden',
         flex: 1,
         width: '100%',
         backgroundColor: '#0553',
@@ -87,6 +121,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
+        backgroundColor: 'black',
     },
     message: {
         textAlign: 'center',
@@ -110,5 +145,27 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
+    },
+    imageContainer: {
+        flex: 1,
+        padding: 10,
+    },
+    cameraButtonsContainer: {
+        backgroundColor: 'black',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    cameraButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+    },
+    cameraButtonText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+        textAlign: 'center',
     },
 })
