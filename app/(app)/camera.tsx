@@ -1,34 +1,55 @@
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera'
-import { useState, useRef } from 'react'
+import {
+    CameraView,
+    CameraType,
+    useCameraPermissions,
+    CameraCapturedPicture,
+} from 'expo-camera'
+import React, { useState, useRef } from 'react'
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { router } from 'expo-router'
 import { icons } from '@/assets/icons'
+import { Image } from 'expo-image'
 
 export default function CameraComponent() {
     const [facing, setFacing] = useState<CameraType>('back')
-    const [permission, requestPermission] = useCameraPermissions()
+    const [permissionCamera, requestCameraPermission] = useCameraPermissions()
+    const [picture, setPicture] = useState<CameraCapturedPicture | undefined>()
 
     let camera: CameraView = useRef<CameraView>(null)
 
-    if (!permission) {
+    if (!permissionCamera) {
         return <View />
     }
 
-    if (!permission.granted) {
+    if (!permissionCamera.granted) {
         return (
             <View style={styles.container}>
                 <Text style={styles.message}>
                     We need your permission to show the camera
                 </Text>
-                <Button onPress={requestPermission} title="grant permission" />
+
+                <Button
+                    onPress={requestCameraPermission}
+                    title="grant permission"
+                />
+            </View>
+        )
+    }
+
+    if (picture) {
+        return (
+            <View style={styles.container}>
+                <Image
+                    source={picture.uri}
+                    style={styles.image}
+                    contentFit="cover"
+                ></Image>
             </View>
         )
     }
 
     const takePicture = async () => {
-        console.log(camera)
-        const photo: any = await camera.current.takePictureAsync()
-        console.log(photo)
+        const photo: any = await camera.current.takePictureAsync({ quality: 0 })
+        setPicture(photo)
     }
 
     const toggleCameraFacing = () => {
@@ -41,15 +62,15 @@ export default function CameraComponent() {
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
                         style={styles.button}
-                        onPress={takePicture}
-                    >
-                        {icons['takePhoto']()}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.button}
                         onPress={toggleCameraFacing}
                     >
                         {icons['flipCamera']()}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={takePicture}
+                    >
+                        {icons['takePhoto']()}
                     </TouchableOpacity>
                 </View>
             </CameraView>
@@ -58,6 +79,11 @@ export default function CameraComponent() {
 }
 
 const styles = StyleSheet.create({
+    image: {
+        flex: 1,
+        width: '100%',
+        backgroundColor: '#0553',
+    },
     container: {
         flex: 1,
         justifyContent: 'center',
