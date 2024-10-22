@@ -13,7 +13,7 @@ export default function AppLayout() {
     return (
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="new_plant" options={{ headerShown: false }} />
+            <Stack.Screen name="camera" options={{ headerShown: false }} />
           </Stack>
     )
 }
