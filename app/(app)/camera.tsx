@@ -17,7 +17,11 @@ export default function CameraComponent() {
     const camera = useRef<CameraView | null>(null)
 
     if (!permissionCamera) {
-        return <View />
+        return (
+            <View style={styles.loadingContainer}>
+                <Text>Loading...</Text>
+            </View>
+        )
     }
 
     if (!permissionCamera.granted) {
@@ -46,20 +50,14 @@ export default function CameraComponent() {
                 </View>
                 <View style={styles.cameraButtonsContainer}>
                     <TouchableOpacity
-                        style={[
-                            styles.cameraButton,
-                            { backgroundColor: '#f44336' },
-                        ]}
+                        style={[styles.cameraButton, styles.retakeButton]}
                         onPress={() => setPicture(undefined)}
                     >
                         <Text style={styles.cameraButtonText}>Retake</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[
-                            styles.cameraButton,
-                            { backgroundColor: '#4CAF50' },
-                        ]}
+                        style={[styles.cameraButton, styles.saveButton]}
                         onPress={() => {
                             console.log('TODO: save picture...')
                         }}
@@ -111,12 +109,17 @@ export default function CameraComponent() {
 }
 
 const styles = StyleSheet.create({
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     image: {
         borderRadius: 10,
         overflow: 'hidden',
         flex: 1,
         width: '100%',
-        backgroundColor: '#0553',
+        backgroundColor: '#f0f0f0',
     },
     container: {
         flex: 1,
@@ -126,20 +129,23 @@ const styles = StyleSheet.create({
     message: {
         textAlign: 'center',
         paddingBottom: 10,
+        color: '#fff',
     },
     camera: {
         flex: 1,
     },
     buttonContainer: {
-        flex: 1,
+        position: 'absolute',
+        bottom: 40,
         flexDirection: 'row',
-        backgroundColor: 'transparent',
-        margin: 64,
+        justifyContent: 'space-around',
+        width: '100%',
+        paddingHorizontal: 20,
     },
     button: {
-        flex: 1,
-        alignSelf: 'flex-end',
         alignItems: 'center',
+        justifyContent: 'center',
+        padding: 10,
     },
     text: {
         fontSize: 24,
@@ -149,23 +155,30 @@ const styles = StyleSheet.create({
     imageContainer: {
         flex: 1,
         padding: 10,
+        backgroundColor: 'black',
     },
     cameraButtonsContainer: {
-        backgroundColor: 'black',
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        marginBottom: 10,
+        padding: 20,
+        backgroundColor: '#000',
     },
     cameraButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
+        paddingVertical: 15,
+        paddingHorizontal: 25,
+        borderRadius: 8,
     },
     cameraButtonText: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#fff',
         textAlign: 'center',
+    },
+    retakeButton: {
+        backgroundColor: '#f44336',
+    },
+    saveButton: {
+        backgroundColor: '#4CAF50',
     },
 })
