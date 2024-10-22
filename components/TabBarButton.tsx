@@ -1,6 +1,6 @@
 import { Text, Pressable, StyleSheet } from 'react-native'
 import React, { useEffect } from 'react'
-import { icons } from '../assets/icons'
+import { icons } from '@/assets/icons'
 import Animated, {
     interpolate,
     useAnimatedStyle,

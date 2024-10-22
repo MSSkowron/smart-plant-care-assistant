@@ -1,6 +1,8 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera'
 import { useState, useRef } from 'react'
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { router } from 'expo-router'
+import { icons } from '@/assets/icons'
 
 export default function CameraComponent() {
     const [facing, setFacing] = useState<CameraType>('back')
@@ -39,15 +41,15 @@ export default function CameraComponent() {
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
                         style={styles.button}
-                        onPress={toggleCameraFacing}
+                        onPress={takePicture}
                     >
-                        <Text style={styles.text}>Flip Camera</Text>
+                        {icons['takePhoto']()}
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={styles.button}
-                        onPress={takePicture}
+                        onPress={toggleCameraFacing}
                     >
-                        <Text style={styles.text}>Take picture</Text>
+                        {icons['flipCamera']()}
                     </TouchableOpacity>
                 </View>
             </CameraView>
