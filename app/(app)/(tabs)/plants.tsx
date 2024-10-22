@@ -1,5 +1,6 @@
 import { Text, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Link } from 'expo-router'
 
 export default function PlantsScreen() {
     return (
@@ -18,6 +19,7 @@ export default function PlantsScreen() {
                 Checking if the light conditions in a room are suitable for a
                 selected plant, using the light sensor data.
             </Text>
+            <Link href="/camera">Add new plant!</Link>
         </SafeAreaView>
     )
 }
