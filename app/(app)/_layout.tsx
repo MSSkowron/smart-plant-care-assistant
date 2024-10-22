@@ -1,8 +1,7 @@
-import { Redirect, Tabs, Stack } from 'expo-router'
+import { Redirect, Stack } from 'expo-router'
 import React from 'react'
 
 import { useAuth } from '@/contextes/AuthContext'
-import TabBar from '@/components/TabBar'
 
 export default function AppLayout() {
     const { session } = useAuth()
@@ -11,9 +10,9 @@ export default function AppLayout() {
     }
 
     return (
-          <Stack>
+        <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="camera" options={{ headerShown: false }} />
-          </Stack>
+        </Stack>
     )
 }

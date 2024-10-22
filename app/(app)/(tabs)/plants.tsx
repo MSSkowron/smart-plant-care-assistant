@@ -1,6 +1,6 @@
 import { Text, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Link } from 'expo-router';
+import { Link } from 'expo-router'
 
 export default function PlantsScreen() {
     return (
