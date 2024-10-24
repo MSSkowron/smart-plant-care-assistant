@@ -8,6 +8,7 @@ import React, { useState, useRef } from 'react'
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { icons } from '@/assets/icons'
 import { Image } from 'expo-image'
+import { Link, useLocalSearchParams } from 'expo-router'
 
 export default function CameraComponent() {
     const [facing, setFacing] = useState<CameraType>('back')
@@ -15,6 +16,22 @@ export default function CameraComponent() {
     const [picture, setPicture] = useState<CameraCapturedPicture | undefined>()
 
     const camera = useRef<CameraView | null>(null)
+
+    const params = useLocalSearchParams()
+    const { plantName, plantIndex, previousScreen } = params
+
+    let previousScreenPath = previousScreen as string
+    switch (previousScreenPath) {
+        case '/plants':
+            previousScreenPath = '/(app)/(tabs)/plants'
+            break
+        case '/addPlant':
+            previousScreenPath = '/(app)/addPlant'
+            break
+        default:
+            previousScreenPath = '/'
+            break
+    }
 
     if (!permissionCamera) {
         return (
@@ -58,11 +75,19 @@ export default function CameraComponent() {
 
                     <TouchableOpacity
                         style={[styles.cameraButton, styles.saveButton]}
-                        onPress={() => {
-                            console.log('TODO: save picture...')
-                        }}
                     >
-                        <Text style={styles.cameraButtonText}>Save</Text>
+                        <Link
+                            href={{
+                                pathname: previousScreenPath,
+                                params: {
+                                    imageURI: picture.uri,
+                                    plantName: plantName,
+                                    plantIndex: plantIndex,
+                                },
+                            }}
+                        >
+                            <Text style={styles.cameraButtonText}>Save</Text>
+                        </Link>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -74,6 +99,7 @@ export default function CameraComponent() {
             try {
                 const photo = await camera.current.takePictureAsync({
                     quality: 0,
+                    base64: true,
                 })
                 setPicture(photo)
             } catch (error) {
@@ -155,14 +181,15 @@ const styles = StyleSheet.create({
     imageContainer: {
         flex: 1,
         padding: 10,
+        marginTop: 5,
         backgroundColor: 'black',
     },
     cameraButtonsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        padding: 20,
         backgroundColor: '#000',
+        marginBottom: 20,
     },
     cameraButton: {
         paddingVertical: 15,
