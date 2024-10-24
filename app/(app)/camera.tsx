@@ -8,6 +8,7 @@ import React, { useState, useRef } from 'react'
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { icons } from '@/assets/icons'
 import { Image } from 'expo-image'
+import { Link, useLocalSearchParams } from 'expo-router'
 
 export default function CameraComponent() {
     const [facing, setFacing] = useState<CameraType>('back')
@@ -15,6 +16,9 @@ export default function CameraComponent() {
     const [picture, setPicture] = useState<CameraCapturedPicture | undefined>()
 
     const camera = useRef<CameraView | null>(null)
+
+    const params = useLocalSearchParams()
+    const { plantName, plantIndex } = params
 
     if (!permissionCamera) {
         return (
@@ -58,11 +62,19 @@ export default function CameraComponent() {
 
                     <TouchableOpacity
                         style={[styles.cameraButton, styles.saveButton]}
-                        onPress={() => {
-                            console.log('TODO: save picture...')
-                        }}
                     >
-                        <Text style={styles.cameraButtonText}>Save</Text>
+                        <Link
+                            href={{
+                                pathname: '/plants',
+                                params: {
+                                    imageURI: picture.uri,
+                                    plantName: plantName,
+                                    plantIndex: plantIndex,
+                                },
+                            }}
+                        >
+                            <Text style={styles.cameraButtonText}>Save</Text>
+                        </Link>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -74,6 +86,7 @@ export default function CameraComponent() {
             try {
                 const photo = await camera.current.takePictureAsync({
                     quality: 0,
+                    base64: true,
                 })
                 setPicture(photo)
             } catch (error) {
