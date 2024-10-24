@@ -37,6 +37,58 @@ export default function AppLayout() {
                     ),
                 }}
             />
+            <Stack.Screen
+                name="addPlant"
+                options={{
+                    headerTitle: 'Add Plant',
+                    headerTitleAlign: 'center',
+                    headerTitleStyle: {
+                        fontWeight: 'bold',
+                        fontSize: 18,
+                        color: 'black',
+                    },
+                    headerLeft: (props) => (
+                        <HeaderBackButton
+                            {...props}
+                            onPress={() => navigation.goBack()}
+                            label="Back"
+                            labelVisible={true}
+                            pressColor="transparent"
+                            tintColor="black"
+                            labelStyle={{
+                                fontWeight: 'bold',
+                                color: 'black',
+                            }}
+                        />
+                    ),
+                }}
+            />
+            <Stack.Screen
+                name="plantDetails"
+                options={{
+                    headerTitle: 'Plant details',
+                    headerTitleAlign: 'center',
+                    headerTitleStyle: {
+                        fontWeight: 'bold',
+                        fontSize: 18,
+                        color: 'black',
+                    },
+                    headerLeft: (props) => (
+                        <HeaderBackButton
+                            {...props}
+                            onPress={() => navigation.goBack()}
+                            label="Back"
+                            labelVisible={true}
+                            pressColor="transparent"
+                            tintColor="black"
+                            labelStyle={{
+                                fontWeight: 'bold',
+                                color: 'black',
+                            }}
+                        />
+                    ),
+                }}
+            />
         </Stack>
     )
 }
