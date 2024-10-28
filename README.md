@@ -28,20 +28,48 @@ Follow these steps to set up and run the app on your local environment.
 
 ### Installation
 
-1. Clone the repository
+1. **Clone the repository**
+
+    Open your terminal and run:
 
     ```bash
     git clone https://github.com/MSSkowron/smart-plant-care-assistant
     cd smart-plant-care-assistant
     ```
 
-2. Install dependencies
+2. **Install dependencies**
+
+    Install the project dependencies:
 
     ```bash
     npm install
     ```
 
-3. Start the app
+3. **Configure environment variables**
+
+    Create a .env.local file in the root directory:
+
+    ```bash
+    touch .env.local
+    ```
+
+    Add the following variables to `.env.local`:
+
+    - `EXPO_PUBLIC_SUPABASE_URL="your-supabase-url"`
+    - `EXPO_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"`
+    - `EXPO_PUBLIC_PLANTNET_API_KEY="your-plantnet-api-key"`
+
+    Replace each placeholder with your actual credentials:
+
+    - `your-supabase-url`: Your Supabase project URL.
+    - `your-supabase-anon-key`: Your Supabase anonymous API key.
+    - `your-plantnet-api-key`: Your PlantNet API key.
+
+    These variables are essential for backend communication and plant identification functionality.
+
+4. **Start the Application**
+
+    Launch the Expo development server:
 
     ```bash
      npx expo start
