@@ -12,6 +12,9 @@ import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import { supabase } from '@/utils/supabase'
 import { useAuth } from '@/contextes/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
+
+const plantNetAPIKey = process.env.EXPO_PUBLIC_PLANTNET_API_KEY || ''
 
 export default function AddPlant() {
     const router = useRouter()
@@ -28,28 +31,52 @@ export default function AddPlant() {
     const params = useLocalSearchParams()
     const { imageURI } = params
 
-    const identifyImage = async (imageURI: string) => {
+    useEffect(() => {
+        if (imageURI && imageURI.length > 0) {
+            identifyImageFromCamera(imageURI as string)
+        }
+    }, [imageURI])
+
+    useEffect(() => {
+        return () => {
+            router.setParams({})
+        }
+    }, [])
+
+    const identifyImageFromCamera = async (imageURI: string) => {
         setLoading(true)
         try {
-            const apiKey = process.env.EXPO_PUBLIC_PLANTNET_API_KEY || ''
             const project = 'all'
-            const endpoint = `https://my-api.plantnet.org/v2/identify/${project}?api-key=${apiKey}`
+            const endpoint = `https://my-api.plantnet.org/v2/identify/${project}?api-key=${plantNetAPIKey}`
 
-            const response = await fetch(imageURI)
-            if (!response.ok) throw new Error('Failed to fetch image.')
-
-            const blob = await response.blob()
+            const localUri = imageURI
+            const filename = localUri.split('/').pop() || `photo.jpg`
+            const match = /\.(\w+)$/.exec(filename)
+            const type = match ? `image/${match[1]}` : `image/jpeg`
 
             const formData = new FormData()
-            formData.append('images', blob)
+
+            formData.append('images', {
+                uri: localUri,
+                name: filename,
+                type: type,
+            } as any) // 'as any' to satisfy TypeScript
+            formData.append('organs', 'auto')
 
             const identifyResponse = await fetch(endpoint, {
                 method: 'POST',
                 body: formData,
+                // Do not set 'Content-Type' header; let fetch handle it
             })
 
-            if (!identifyResponse.ok)
-                throw new Error('Failed to identify plant.')
+            if (!identifyResponse.ok) {
+                throw new Error(
+                    `Failed to identify plant. Status: ${identifyResponse.status}`,
+                )
+            }
+
+            const data = await identifyResponse.json()
+            console.log('Plant identification result:', data)
         } catch (err) {
             const errorMessage =
                 String(err)?.replace(/^Error:\s*/, '') ||
@@ -62,17 +89,71 @@ export default function AddPlant() {
         }
     }
 
-    useEffect(() => {
-        if (imageURI && imageURI.length > 0) {
-            identifyImage(imageURI as string)
-        }
-    }, [imageURI])
+    const identifyImageFromGallery = async () => {
+        setLoading(true)
+        try {
+            const { status } =
+                await ImagePicker.requestMediaLibraryPermissionsAsync()
+            if (status !== 'granted') {
+                alert(
+                    'Sorry, we need media library permissions to make this work!',
+                )
+                return
+            }
 
-    useEffect(() => {
-        return () => {
-            router.setParams({})
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsMultipleSelection: false,
+                quality: 1,
+            })
+
+            if (result.canceled) {
+                setLoading(false)
+                return
+            }
+
+            const project = 'all'
+            const endpoint = `https://my-api.plantnet.org/v2/identify/${project}?api-key=${plantNetAPIKey}`
+
+            const formData = new FormData()
+
+            const image = result.assets[0]
+            const localUri = image.uri
+            const filename = localUri.split('/').pop() || `photo.jpg`
+            const match = /\.(\w+)$/.exec(filename)
+            const type = match ? `image/${match[1]}` : `image/jpeg`
+
+            formData.append('images', {
+                uri: localUri,
+                name: filename,
+                type: type,
+            } as any) // 'as any' to satisfy TypeScript
+            formData.append('organs', 'auto')
+
+            const identifyResponse = await fetch(endpoint, {
+                method: 'POST',
+                body: formData,
+                // Do not set 'Content-Type' header; let fetch handle it
+            })
+
+            if (!identifyResponse.ok) {
+                throw new Error(
+                    `Failed to identify plant. Status: ${identifyResponse.status}`,
+                )
+            }
+
+            const data = await identifyResponse.json()
+            console.log('Plant identification result:', data)
+        } catch (err) {
+            const errorMessage =
+                String(err)?.replace(/^Error:\s*/, '') ||
+                'An unexpected error occurred. Please try again.'
+
+            Alert.alert('Error', errorMessage, [{ text: 'OK' }])
+        } finally {
+            setLoading(false)
         }
-    }, [])
+    }
 
     const handleAddPlant = async () => {
         if (
@@ -133,21 +214,33 @@ export default function AddPlant() {
                     </Text>
 
                     <View style={styles.cameraSection}>
-                        <TouchableOpacity style={styles.cameraButton}>
-                            <Link
-                                href={{
-                                    pathname: '/camera',
-                                    params: { previousScreen: '/addPlant' },
-                                }}
-                                style={styles.cameraLink}
+                        <View style={styles.cameraButtons}>
+                            <TouchableOpacity style={styles.cameraButton}>
+                                <Link
+                                    href={{
+                                        pathname: '/camera',
+                                        params: { previousScreen: '/addPlant' },
+                                    }}
+                                    style={styles.cameraLink}
+                                >
+                                    <Ionicons
+                                        name="camera-outline"
+                                        size={50}
+                                        color="#ffffff"
+                                    />
+                                </Link>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.cameraButton}
+                                onPress={identifyImageFromGallery}
                             >
                                 <Ionicons
-                                    name="camera-outline"
+                                    name="images-outline"
                                     size={50}
                                     color="#ffffff"
                                 />
-                            </Link>
-                        </TouchableOpacity>
+                            </TouchableOpacity>
+                        </View>
                         <Text style={styles.cameraText}>
                             Use AI to Identify Plant
                         </Text>
@@ -225,6 +318,10 @@ const styles = StyleSheet.create({
     cameraSection: {
         alignItems: 'center',
         marginBottom: 25,
+    },
+    cameraButtons: {
+        flexDirection: 'row',
+        gap: 10,
     },
     cameraButton: {
         backgroundColor: '#2e8b57',
