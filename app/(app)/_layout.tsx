@@ -40,13 +40,7 @@ export default function AppLayout() {
             <Stack.Screen
                 name="addPlant"
                 options={{
-                    headerTitle: 'Add Plant',
-                    headerTitleAlign: 'center',
-                    headerTitleStyle: {
-                        fontWeight: 'bold',
-                        fontSize: 18,
-                        color: 'black',
-                    },
+                    headerTitle: '',
                     headerLeft: (props) => (
                         <HeaderBackButton
                             {...props}

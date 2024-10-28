@@ -10,17 +10,10 @@ export default function PlantDetails() {
         lightRequirements,
         wateringFrequency,
         createdAt,
-        images,
+        image,
     } = useLocalSearchParams()
 
-    let imagesList: string[] = []
-    if (!images || images.length === 0) {
-        imagesList = []
-    } else {
-        imagesList = (images as string)
-            .split(',')
-            .filter((imageURI) => imageURI.length > 0)
-    }
+    const imageString = image as string
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString)
@@ -32,30 +25,29 @@ export default function PlantDetails() {
     }
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>{name}</Text>
             <Text style={styles.subTitle}>{species}</Text>
-            <Text style={styles.detailText}>
-                Watering Frequency: {wateringFrequency}
-            </Text>
-            <Text style={styles.detailText}>
-                Light Requirements: {lightRequirements}
-            </Text>
-            <Text style={styles.detailText}>
-                Added on: {formatDate(createdAt as string)}
-            </Text>
-            <Text style={styles.sectionTitle}>Photos</Text>
+            <View style={styles.detailsContainer}>
+                <Text style={styles.detailText}>
+                    <Text style={styles.detailLabel}>Watering Frequency: </Text>
+                    {wateringFrequency}
+                </Text>
+                <Text style={styles.detailText}>
+                    <Text style={styles.detailLabel}>Light Requirements: </Text>
+                    {lightRequirements}
+                </Text>
+                <Text style={styles.detailText}>
+                    <Text style={styles.detailLabel}>Added on: </Text>
+                    {formatDate(createdAt as string)}
+                </Text>
+            </View>
             <View style={styles.imageContainer}>
-                {imagesList.length > 0 ? (
-                    imagesList.map((imageUrl, index) => (
-                        <Image
-                            key={index}
-                            source={{ uri: imageUrl }}
-                            style={styles.image}
-                        />
-                    ))
+                <Text style={styles.photoTitle}>Photo</Text>
+                {imageString.length > 0 ? (
+                    <Image source={{ uri: imageString }} style={styles.image} />
                 ) : (
-                    <Text style={styles.noImageText}>No photos available</Text>
+                    <Text style={styles.noImageText}>No photo available</Text>
                 )}
             </View>
         </ScrollView>
@@ -64,60 +56,51 @@ export default function PlantDetails() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: '#fff',
-    },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    backButtonText: {
-        fontSize: 16,
-        color: COLOR_PRIMARY,
+        flexGrow: 1,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        backgroundColor: '#FAFAFA',
     },
     title: {
-        fontSize: 28,
+        fontSize: 30,
         fontWeight: 'bold',
         color: COLOR_PRIMARY,
-        marginBottom: 8,
     },
     subTitle: {
         fontSize: 22,
         fontWeight: '600',
         color: COLOR_SECONDARY,
-        marginBottom: 8,
+        marginBottom: 10,
     },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: COLOR_PRIMARY,
-        marginTop: 16,
-        marginBottom: 8,
+    detailsContainer: {
+        marginBottom: 10,
     },
     detailText: {
         fontSize: 16,
         color: '#555',
-        marginBottom: 4,
+    },
+    detailLabel: {
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    photoTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: COLOR_PRIMARY,
     },
     imageContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        gap: 10,
+        gap: 5,
     },
     image: {
-        width: 170,
-        height: 170,
-        borderRadius: 10,
-        marginBottom: 10,
+        width: 200,
+        height: 200,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#DDD',
     },
     noImageText: {
         fontSize: 16,
-        color: '#999',
+        color: '#888',
         textAlign: 'center',
-        width: '100%',
-        marginTop: 10,
     },
 })
