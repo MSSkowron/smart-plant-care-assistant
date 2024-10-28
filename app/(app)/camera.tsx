@@ -98,7 +98,7 @@ export default function CameraComponent() {
         if (camera.current) {
             try {
                 const photo = await camera.current.takePictureAsync({
-                    quality: 0,
+                    quality: 1,
                     base64: true,
                 })
                 setPicture(photo)
