@@ -31,7 +31,7 @@ export default function AddPlant() {
     const identifyImage = async (imageURI: string) => {
         setLoading(true)
         try {
-            const apiKey = '2b10yXWEghFFHoZevy2fOIv4e'
+            const apiKey = process.env.EXPO_PUBLIC_PLANTNET_API_KEY || ''
             const project = 'all'
             const endpoint = `https://my-api.plantnet.org/v2/identify/${project}?api-key=${apiKey}`
 
