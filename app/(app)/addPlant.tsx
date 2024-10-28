@@ -7,276 +7,298 @@ import {
     Alert,
     ActivityIndicator,
     TouchableOpacity,
+    ScrollView,
+    Dimensions,
+    Platform,
 } from 'react-native'
-import { Link, useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { supabase } from '@/utils/supabase'
 import { useAuth } from '@/contextes/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
+import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
+import { useImage } from '@/store/hooks'
+import { COLOR_PRIMARY } from '@/assets/colors'
+
+interface plantData {
+    name: string | undefined
+    species: string | undefined
+    lightRequirements: string | undefined
+    wateringFrequency: string | undefined
+}
 
 const plantNetAPIKey = process.env.EXPO_PUBLIC_PLANTNET_API_KEY || ''
+const { width } = Dimensions.get('window')
 
 export default function AddPlant() {
     const router = useRouter()
     const { session } = useAuth()
     const userID = session!.user.id
 
+    const { image, updateImage, clearImage } = useImage()
+
     const [loading, setLoading] = useState(false)
-
-    const [plantName, setPlantName] = useState('')
-    const [species, setSpecies] = useState('')
-    const [lightRequirements, setLightRequirements] = useState('')
-    const [wateringFrequency, setWateringFrequency] = useState('')
-
-    const params = useLocalSearchParams()
-    const { imageURI } = params
+    const [plantData, setPlantData] = useState<plantData>({
+        name: undefined,
+        species: undefined,
+        lightRequirements: undefined,
+        wateringFrequency: undefined,
+    })
 
     useEffect(() => {
-        if (imageURI && imageURI.length > 0) {
-            identifyImageFromCamera(imageURI as string)
-        }
-    }, [imageURI])
-
-    useEffect(() => {
-        return () => {
-            router.setParams({})
-        }
+        clearImage() // when initializing component clear image
     }, [])
 
-    const identifyImageFromCamera = async (imageURI: string) => {
+    useEffect(() => {
+        if (image) {
+            identifyPlant(image)
+        }
+    }, [image])
+
+    const handleImageSelection = async (source: 'camera' | 'gallery') => {
+        try {
+            if (source === 'gallery') {
+                const { status } =
+                    await ImagePicker.requestMediaLibraryPermissionsAsync()
+                if (status !== 'granted') {
+                    Alert.alert(
+                        'Permission needed',
+                        'Sorry, we need media library permissions to make this work!',
+                    )
+                    return
+                }
+
+                const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsMultipleSelection: false,
+                    quality: 1,
+                })
+
+                if (!result.canceled) {
+                    updateImage(result.assets[0].uri)
+                }
+            } else {
+                router.push('/camera')
+            }
+        } catch (error) {
+            handleError(error)
+        }
+    }
+
+    const identifyPlant = async (imageUri: string) => {
         setLoading(true)
         try {
             const project = 'all'
             const endpoint = `https://my-api.plantnet.org/v2/identify/${project}?api-key=${plantNetAPIKey}`
 
-            const localUri = imageURI
-            const filename = localUri.split('/').pop() || `photo.jpg`
+            const filename = imageUri.split('/').pop() || 'photo.jpg'
             const match = /\.(\w+)$/.exec(filename)
-            const type = match ? `image/${match[1]}` : `image/jpeg`
+            const type = match ? `image/${match[1]}` : 'image/jpeg'
 
             const formData = new FormData()
-
             formData.append('images', {
-                uri: localUri,
+                uri: imageUri,
                 name: filename,
-                type: type,
-            } as any) // 'as any' to satisfy TypeScript
+                type,
+            } as any)
             formData.append('organs', 'auto')
 
-            const identifyResponse = await fetch(endpoint, {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 body: formData,
-                // Do not set 'Content-Type' header; let fetch handle it
             })
 
-            if (!identifyResponse.ok) {
+            if (!response.ok) {
                 throw new Error(
-                    `Failed to identify plant. Status: ${identifyResponse.status}`,
+                    `Failed to identify plant. Status: ${response.status}`,
                 )
             }
 
-            const data = await identifyResponse.json()
-            console.log('Plant identification result:', data)
-        } catch (err) {
-            const errorMessage =
-                String(err)?.replace(/^Error:\s*/, '') ||
-                'An unexpected error occurred. Please try again.'
+            const data = await response.json()
+            const family =
+                data.results[0].species.family.scientificNameWithoutAuthor
+            const genus =
+                data.results[0].species.genus.scientificNameWithoutAuthor
 
-            Alert.alert('Error', errorMessage, [{ text: 'OK' }])
+            setPlantData((prev) => ({
+                ...prev,
+                species: `${family} - ${genus}`,
+            }))
+        } catch (error) {
+            handleError(error)
         } finally {
-            router.setParams({})
             setLoading(false)
         }
     }
 
-    const identifyImageFromGallery = async () => {
-        setLoading(true)
-        try {
-            const { status } =
-                await ImagePicker.requestMediaLibraryPermissionsAsync()
-            if (status !== 'granted') {
-                alert(
-                    'Sorry, we need media library permissions to make this work!',
-                )
-                return
-            }
+    const uploadImage = async (imageURI: string) => {
+        const response = await fetch(imageURI)
+        if (!response.ok) throw new Error('Failed to fetch image.')
 
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsMultipleSelection: false,
-                quality: 1,
+        const blob = await response.blob()
+        const arrayBuffer = await new Response(blob).arrayBuffer()
+        const fileName = `${userID}/${plantData.name}.jpg`
+
+        const { error } = await supabase.storage
+            .from('user-plant-images')
+            .upload(fileName, arrayBuffer, {
+                contentType: 'image/jpeg',
+                upsert: true,
             })
 
-            if (result.canceled) {
-                setLoading(false)
-                return
-            }
+        if (error) throw new Error(error.message)
+    }
 
-            const project = 'all'
-            const endpoint = `https://my-api.plantnet.org/v2/identify/${project}?api-key=${plantNetAPIKey}`
+    const handleInputChange = (
+        field: keyof typeof plantData,
+        value: string,
+    ) => {
+        setPlantData((prev) => ({
+            ...prev,
+            [field]: value,
+        }))
+    }
 
-            const formData = new FormData()
-
-            const image = result.assets[0]
-            const localUri = image.uri
-            const filename = localUri.split('/').pop() || `photo.jpg`
-            const match = /\.(\w+)$/.exec(filename)
-            const type = match ? `image/${match[1]}` : `image/jpeg`
-
-            formData.append('images', {
-                uri: localUri,
-                name: filename,
-                type: type,
-            } as any) // 'as any' to satisfy TypeScript
-            formData.append('organs', 'auto')
-
-            const identifyResponse = await fetch(endpoint, {
-                method: 'POST',
-                body: formData,
-                // Do not set 'Content-Type' header; let fetch handle it
-            })
-
-            if (!identifyResponse.ok) {
-                throw new Error(
-                    `Failed to identify plant. Status: ${identifyResponse.status}`,
-                )
-            }
-
-            const data = await identifyResponse.json()
-            console.log('Plant identification result:', data)
-        } catch (err) {
-            const errorMessage =
-                String(err)?.replace(/^Error:\s*/, '') ||
-                'An unexpected error occurred. Please try again.'
-
-            Alert.alert('Error', errorMessage, [{ text: 'OK' }])
-        } finally {
-            setLoading(false)
+    const validateForm = (): boolean => {
+        const { name, species, lightRequirements, wateringFrequency } =
+            plantData
+        if (
+            !name ||
+            !species ||
+            !lightRequirements ||
+            !wateringFrequency ||
+            !image
+        ) {
+            Alert.alert('Warning', 'Please fill all fields and add an image')
+            return false
         }
+        return true
     }
 
     const handleAddPlant = async () => {
-        if (
-            !plantName ||
-            !species ||
-            !lightRequirements ||
-            !wateringFrequency
-        ) {
-            Alert.alert('Warning', 'Please fill all fields', [{ text: 'OK' }])
-            return
-        }
+        if (!validateForm()) return
 
         setLoading(true)
         try {
             const { error } = await supabase.from('plants').insert({
-                name: plantName,
-                species,
-                light_requirements: lightRequirements,
-                watering_frequency: parseInt(wateringFrequency, 10),
+                name: plantData.name!,
+                species: plantData.species!,
+                light_requirements: plantData.lightRequirements!,
+                watering_frequency: parseInt(plantData.wateringFrequency!, 10),
                 user_id: userID,
             })
 
-            if (error) {
-                const errorMessage =
-                    String(error)?.replace(/^Error:\s*/, '') ||
-                    'An unexpected error occurred. Please try again.'
+            if (error) throw new Error(error.message)
 
-                Alert.alert('Error', errorMessage, [{ text: 'OK' }])
-            } else {
-                Alert.alert('Success', 'Plant added successfully!', [
-                    { text: 'OK' },
-                ])
-                router.back()
-            }
-        } catch (err) {
-            console.error('Error:', err)
+            await uploadImage(image!)
+            Alert.alert('Success', 'Plant added successfully!', [
+                { text: 'OK', onPress: () => router.back() },
+            ])
+        } catch (error) {
+            handleError(error)
         } finally {
             setLoading(false)
         }
     }
 
+    const handleError = (error: unknown) => {
+        const errorMessage =
+            String(error)?.replace(/^Error:\s*/, '') ||
+            'An unexpected error occurred. Please try again.'
+        Alert.alert('Error', errorMessage)
+    }
+
+    const fields = [
+        { label: 'Plant Name', key: 'name' },
+        { label: 'Species', key: 'species' },
+        { label: 'Light Requirements', key: 'lightRequirements' },
+        { label: 'Watering Frequency (days)', key: 'wateringFrequency' },
+    ] as const
+
     return (
-        <View style={styles.container}>
+        <ScrollView
+            contentContainerStyle={styles.container}
+            showsVerticalScrollIndicator={false}
+        >
             {loading ? (
-                <View
-                    style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}
-                >
-                    <ActivityIndicator size="large" color="#228B22" />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#34D399" />
+                    <Text style={styles.loadingText}>
+                        Processing your plant...
+                    </Text>
                 </View>
             ) : (
                 <>
-                    <Text style={styles.subtitle}>
-                        Identify your plant or fill in the details
-                    </Text>
-
-                    <View style={styles.cameraSection}>
-                        <View style={styles.cameraButtons}>
-                            <TouchableOpacity style={styles.cameraButton}>
-                                <Link
-                                    href={{
-                                        pathname: '/camera',
-                                        params: { previousScreen: '/addPlant' },
-                                    }}
-                                    style={styles.cameraLink}
-                                >
-                                    <Ionicons
-                                        name="camera-outline"
-                                        size={50}
-                                        color="#ffffff"
-                                    />
-                                </Link>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.cameraButton}
-                                onPress={identifyImageFromGallery}
-                            >
-                                <Ionicons
-                                    name="images-outline"
-                                    size={50}
-                                    color="#ffffff"
-                                />
-                            </TouchableOpacity>
-                        </View>
-                        <Text style={styles.cameraText}>
-                            Use AI to Identify Plant
+                    <View style={styles.header}>
+                        <Text style={styles.title}>Add New Plant</Text>
+                        <Text style={styles.subtitle}>
+                            Identify your plant or fill in the details
                         </Text>
                     </View>
 
-                    <View style={styles.form}>
-                        {[
-                            'Plant Name',
-                            'Species',
-                            'Light Requirements',
-                            'Watering Frequency (days)',
-                        ].map((label, index) => (
-                            <View key={index} style={styles.inputContainer}>
+                    <View style={styles.imageSection}>
+                        {image ? (
+                            <Image
+                                source={{ uri: image }}
+                                style={styles.previewImage}
+                                contentFit="contain"
+                            />
+                        ) : (
+                            <View style={styles.imagePlaceholder}>
+                                <Ionicons
+                                    name="leaf-outline"
+                                    size={50}
+                                    color="#9CA3AF"
+                                />
+                                <Text style={styles.placeholderText}>
+                                    No image selected
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+
+                    <View style={styles.cameraSection}>
+                        <View style={styles.cameraButtons}>
+                            <TouchableOpacity
+                                style={styles.cameraButton}
+                                onPress={() => handleImageSelection('camera')}
+                            >
+                                <Ionicons
+                                    name="camera-outline"
+                                    size={24}
+                                    color="#ffffff"
+                                />
+                                <Text style={styles.buttonLabel}>Camera</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.cameraButton}
+                                onPress={() => handleImageSelection('gallery')}
+                            >
+                                <Ionicons
+                                    name="images-outline"
+                                    size={24}
+                                    color="#ffffff"
+                                />
+                                <Text style={styles.buttonLabel}>Gallery</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    <View style={styles.formContainer}>
+                        <Text style={styles.formTitle}>Plant Details</Text>
+                        {fields.map(({ label, key }) => (
+                            <View key={key} style={styles.inputContainer}>
                                 <Text style={styles.label}>{label}</Text>
                                 <TextInput
                                     placeholder={`Enter ${label.toLowerCase()}`}
-                                    placeholderTextColor="#888"
+                                    placeholderTextColor="#9CA3AF"
                                     style={styles.input}
-                                    value={
-                                        [
-                                            plantName,
-                                            species,
-                                            lightRequirements,
-                                            wateringFrequency,
-                                        ][index]
-                                    }
-                                    onChangeText={
-                                        [
-                                            setPlantName,
-                                            setSpecies,
-                                            setLightRequirements,
-                                            setWateringFrequency,
-                                        ][index]
+                                    value={plantData[key]}
+                                    onChangeText={(value) =>
+                                        handleInputChange(key, value)
                                     }
                                     keyboardType={
-                                        label.includes('days')
+                                        key === 'wateringFrequency'
                                             ? 'numeric'
                                             : 'default'
                                     }
@@ -285,90 +307,180 @@ export default function AddPlant() {
                         ))}
 
                         <TouchableOpacity
-                            style={styles.button}
+                            style={styles.submitButton}
                             onPress={handleAddPlant}
                         >
-                            <Text style={styles.buttonText}>Add Plant</Text>
+                            <Text style={styles.submitButtonText}>
+                                Add Plant
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </>
             )}
-        </View>
+        </ScrollView>
     )
+}
+
+const buttonBaseStyle = {
+    backgroundColor: COLOR_PRIMARY,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+        width: 0,
+        height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#f8f8f8',
+        flexGrow: 1,
+        backgroundColor: '#F9FAFB',
+        paddingBottom: 40,
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        height: 400,
+    },
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        color: '#4B5563',
+        fontWeight: '500',
+    },
+    header: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 10,
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#111827',
+        marginBottom: 4,
     },
     subtitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        textAlign: 'center',
-        color: '#444',
-        marginBottom: 20,
+        fontSize: 16,
+        color: '#6B7280',
+        marginBottom: 8,
+    },
+    imageSection: {
+        margin: 20,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        overflow: 'hidden',
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 4,
+            },
+        }),
+    },
+    previewImage: {
+        width: '100%',
+        height: width * 0.6,
+        borderRadius: 16,
+    },
+    imagePlaceholder: {
+        width: '100%',
+        height: width * 0.6,
+        backgroundColor: '#F3F4F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 16,
+    },
+    placeholderText: {
+        marginTop: 12,
+        fontSize: 16,
+        color: '#9CA3AF',
     },
     cameraSection: {
-        alignItems: 'center',
-        marginBottom: 25,
+        paddingHorizontal: 20,
+        marginBottom: 20,
     },
     cameraButtons: {
         flexDirection: 'row',
-        gap: 10,
+        justifyContent: 'center',
+        gap: 16,
     },
     cameraButton: {
-        backgroundColor: '#2e8b57',
-        borderRadius: 50,
-        padding: 15,
-        elevation: 3,
-    },
-    cameraLink: {
-        justifyContent: 'center',
+        ...buttonBaseStyle,
+        flexDirection: 'row',
         alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        flex: 1,
+        justifyContent: 'center',
+        gap: 8,
     },
-    cameraText: {
-        marginTop: 10,
-        fontSize: 14,
-        color: '#666',
+    buttonLabel: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
     },
-    form: {
-        marginTop: 15,
+    formContainer: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        marginHorizontal: 20,
+        padding: 20,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 3,
+            },
+            android: {
+                elevation: 4,
+            },
+        }),
+    },
+    formTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#111827',
+        marginBottom: 16,
     },
     inputContainer: {
-        marginBottom: 15,
+        marginBottom: 16,
     },
     label: {
         fontSize: 14,
-        marginBottom: 5,
-        color: '#666',
+        fontWeight: '500',
+        color: '#4B5563',
+        marginBottom: 6,
     },
     input: {
-        height: 50,
-        borderColor: '#ddd',
+        height: 48,
         borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        backgroundColor: '#fff',
-        elevation: 2,
+        borderColor: '#E5E7EB',
+        borderRadius: 10,
+        paddingHorizontal: 16,
+        fontSize: 16,
+        backgroundColor: '#FFFFFF',
+        color: '#111827',
     },
-    button: {
-        backgroundColor: '#2e8b57',
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginTop: 20,
-        elevation: 3,
+    submitButton: {
+        ...buttonBaseStyle,
+        paddingVertical: 16,
+        marginTop: 24,
     },
-    buttonText: {
-        color: '#fff',
+    submitButtonText: {
+        color: '#FFFFFF',
         fontSize: 16,
         fontWeight: 'bold',
+        textAlign: 'center',
     },
 })

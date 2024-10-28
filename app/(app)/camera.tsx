@@ -4,208 +4,291 @@ import {
     useCameraPermissions,
     CameraCapturedPicture,
 } from 'expo-camera'
-import React, { useState, useRef } from 'react'
-import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import React, { useState, useRef, useCallback } from 'react'
+import {
+    ActivityIndicator,
+    Platform,
+    SafeAreaView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
+} from 'react-native'
 import { icons } from '@/assets/icons'
 import { Image } from 'expo-image'
-import { Link, useLocalSearchParams } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
+import { useImage } from '@/store/hooks'
+
+const SCREEN_ROUTES = {
+    plants: '/(app)/(tabs)/plants',
+    addPlant: '/(app)/addPlant',
+    default: '/',
+} as const
 
 export default function CameraComponent() {
     const [facing, setFacing] = useState<CameraType>('back')
     const [permissionCamera, requestCameraPermission] = useCameraPermissions()
     const [picture, setPicture] = useState<CameraCapturedPicture | undefined>()
+    const [isCapturing, setIsCapturing] = useState(false)
+    const { height, width } = useWindowDimensions()
 
+    const { updateImage } = useImage()
     const camera = useRef<CameraView | null>(null)
+    const { previousScreen } = useLocalSearchParams()
 
-    const params = useLocalSearchParams()
-    const { plantName, plantIndex, previousScreen } = params
+    const previousScreenPath =
+        SCREEN_ROUTES[previousScreen as keyof typeof SCREEN_ROUTES] ||
+        SCREEN_ROUTES.default
 
-    let previousScreenPath = previousScreen as string
-    switch (previousScreenPath) {
-        case '/plants':
-            previousScreenPath = '/(app)/(tabs)/plants'
-            break
-        case '/addPlant':
-            previousScreenPath = '/(app)/addPlant'
-            break
-        default:
-            previousScreenPath = '/'
-            break
-    }
+    const handleTakePicture = useCallback(async () => {
+        if (!camera.current || isCapturing) return
+
+        setIsCapturing(true)
+        try {
+            const photo = await camera.current.takePictureAsync({
+                quality: 1,
+                base64: true,
+                exif: true,
+            })
+
+            if (!photo?.uri) {
+                throw new Error('Failed to capture image: URI is undefined')
+            }
+
+            setPicture(photo)
+        } catch (error) {
+            console.error('Error taking picture:', error)
+            // TODO: Add error handling UI
+        } finally {
+            setIsCapturing(false)
+        }
+    }, [isCapturing])
+
+    const handleToggleCameraFacing = useCallback(() => {
+        setFacing((current) => (current === 'back' ? 'front' : 'back'))
+    }, [])
+
+    const handleSavePicture = useCallback(() => {
+        if (picture?.uri) {
+            updateImage(picture.uri)
+            router.back()
+        }
+    }, [picture, updateImage])
+
+    const handleRetake = useCallback(() => {
+        setPicture(undefined)
+    }, [])
 
     if (!permissionCamera) {
         return (
-            <View style={styles.loadingContainer}>
-                <Text>Loading...</Text>
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#fff" />
+                <Text style={styles.loadingText}>Initializing camera...</Text>
             </View>
         )
     }
 
     if (!permissionCamera.granted) {
         return (
-            <View style={styles.container}>
+            <View style={styles.centered}>
                 <Text style={styles.message}>
-                    We need your permission to show the camera
+                    Camera access is required to take photos
                 </Text>
-                <Button
+                <TouchableOpacity
+                    style={styles.permissionButton}
                     onPress={requestCameraPermission}
-                    title="Grant Permission"
-                />
+                >
+                    <Text style={styles.permissionButtonText}>
+                        Grant Camera Permission
+                    </Text>
+                </TouchableOpacity>
             </View>
         )
     }
 
     if (picture) {
         return (
-            <View style={styles.container}>
-                <View style={styles.imageContainer}>
+            <SafeAreaView style={styles.container}>
+                <View style={styles.previewContainer}>
                     <Image
                         source={{ uri: picture.uri }}
-                        style={styles.image}
+                        style={styles.previewImage}
                         contentFit="cover"
+                        transition={200}
                     />
-                </View>
-                <View style={styles.cameraButtonsContainer}>
-                    <TouchableOpacity
-                        style={[styles.cameraButton, styles.retakeButton]}
-                        onPress={() => setPicture(undefined)}
-                    >
-                        <Text style={styles.cameraButtonText}>Retake</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.cameraButton, styles.saveButton]}
-                    >
-                        <Link
-                            href={{
-                                pathname: previousScreenPath,
-                                params: {
-                                    imageURI: picture.uri,
-                                    plantName: plantName,
-                                    plantIndex: plantIndex,
-                                },
-                            }}
+                    <View style={styles.previewButtons}>
+                        <TouchableOpacity
+                            style={[styles.previewButton, styles.retakeButton]}
+                            onPress={handleRetake}
                         >
-                            <Text style={styles.cameraButtonText}>Save</Text>
-                        </Link>
-                    </TouchableOpacity>
+                            <Text style={styles.buttonText}>Retake</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.previewButton, styles.saveButton]}
+                            onPress={handleSavePicture}
+                        >
+                            <Text style={styles.buttonText}>Use Photo</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
+            </SafeAreaView>
         )
     }
 
-    const takePicture = async () => {
-        if (camera.current) {
-            try {
-                const photo = await camera.current.takePictureAsync({
-                    quality: 1,
-                    base64: true,
-                })
-                setPicture(photo)
-            } catch (error) {
-                console.error('Error taking picture:', error)
-            }
-        }
-    }
-
-    const toggleCameraFacing = () => {
-        setFacing((current) => (current === 'back' ? 'front' : 'back'))
-    }
-
     return (
-        <View style={styles.container}>
-            <CameraView style={styles.camera} facing={facing} ref={camera}>
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={toggleCameraFacing}
-                    >
-                        {icons['flipCamera']()}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={takePicture}
-                    >
-                        {icons['takePhoto']()}
-                    </TouchableOpacity>
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="light-content" />
+            <CameraView
+                style={[styles.camera, { height, width }]}
+                facing={facing}
+                ref={camera}
+            >
+                <View style={styles.overlay}>
+                    <View style={styles.controls}>
+                        <TouchableOpacity
+                            style={styles.controlButton}
+                            onPress={handleToggleCameraFacing}
+                            disabled={isCapturing}
+                        >
+                            {icons['flipCamera']()}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.captureButton,
+                                isCapturing && styles.captureButtonDisabled,
+                            ]}
+                            onPress={handleTakePicture}
+                            disabled={isCapturing}
+                        >
+                            {isCapturing ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                icons['takePhoto']()
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </CameraView>
-        </View>
+        </SafeAreaView>
     )
 }
 
 const styles = StyleSheet.create({
-    loadingContainer: {
+    container: {
+        flex: 1,
+        backgroundColor: '#000',
+    },
+    centered: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: '#000',
+        padding: 20,
     },
-    image: {
-        borderRadius: 10,
-        overflow: 'hidden',
-        flex: 1,
-        width: '100%',
-        backgroundColor: '#f0f0f0',
-    },
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        backgroundColor: 'black',
+    loadingText: {
+        color: '#fff',
+        marginTop: 10,
+        fontSize: 16,
     },
     message: {
-        textAlign: 'center',
-        paddingBottom: 10,
         color: '#fff',
+        fontSize: 16,
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    permissionButton: {
+        backgroundColor: '#2196F3',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 8,
+        elevation: 3,
+    },
+    permissionButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
     },
     camera: {
         flex: 1,
     },
-    buttonContainer: {
-        position: 'absolute',
-        bottom: 40,
+    overlay: {
+        flex: 1,
+        backgroundColor: 'transparent',
+        justifyContent: 'flex-end',
+    },
+    controls: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        width: '100%',
+        alignItems: 'center',
+        paddingBottom: Platform.OS === 'ios' ? 20 : 40,
         paddingHorizontal: 20,
     },
-    button: {
-        alignItems: 'center',
+    controlButton: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
         justifyContent: 'center',
-        padding: 10,
+        alignItems: 'center',
     },
-    text: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
+    captureButton: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
-    imageContainer: {
+    captureButtonDisabled: {
+        opacity: 0.7,
+    },
+    previewContainer: {
         flex: 1,
-        padding: 10,
-        marginTop: 5,
-        backgroundColor: 'black',
+        backgroundColor: '#000',
     },
-    cameraButtonsContainer: {
+    previewImage: {
+        flex: 1,
+        width: '100%',
+        backgroundColor: '#f0f0f0',
+    },
+    previewButtons: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
+        paddingVertical: 20,
+        paddingHorizontal: 16,
         backgroundColor: '#000',
-        marginBottom: 20,
     },
-    cameraButton: {
-        paddingVertical: 15,
-        paddingHorizontal: 25,
+    previewButton: {
+        flex: 1,
+        marginHorizontal: 8,
+        paddingVertical: 12,
         borderRadius: 8,
-    },
-    cameraButtonText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#fff',
-        textAlign: 'center',
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
     retakeButton: {
-        backgroundColor: '#f44336',
+        backgroundColor: '#ef4444',
     },
     saveButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#22c55e',
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center',
     },
 })
