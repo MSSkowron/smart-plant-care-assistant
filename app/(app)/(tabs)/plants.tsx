@@ -7,6 +7,8 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    Dimensions,
+    Pressable,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Link } from 'expo-router'
@@ -16,6 +18,7 @@ import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 
 import { COLOR_PRIMARY } from '@/assets/colors'
+const SCREEN_WIDTH = Dimensions.get('window').width
 
 export default function PlantsScreen() {
     const { session } = useAuth()
@@ -23,7 +26,6 @@ export default function PlantsScreen() {
 
     const [plants, setPlants] = useState<Plant[]>([])
     const [plantImages, setPlantImages] = useState<Record<string, string>>({})
-
     const [loading, setLoading] = useState(false)
 
     const fetchPlants = async () => {
@@ -128,76 +130,111 @@ export default function PlantsScreen() {
         }
     }, [])
 
+    const renderEmptyState = () => (
+        <View style={styles.emptyState}>
+            <Ionicons name="leaf-outline" size={64} color={COLOR_PRIMARY} />
+            <Text style={styles.emptyStateTitle}>
+                You don't have any plants yet
+            </Text>
+            <Text style={styles.emptyStateSubtitle}>
+                Add your first plant by clicking the "+" button
+            </Text>
+        </View>
+    )
+
+    const renderPlantItem = ({ item }: { item: Plant }) => (
+        <TouchableOpacity style={styles.plantTouchable} activeOpacity={0.7}>
+            <Link
+                href={{
+                    pathname: '/plantDetails',
+                    params: {
+                        name: item.name,
+                        species: item.species,
+                        lightRequirements: item.light_requirements,
+                        wateringFrequency: item.watering_frequency,
+                        createdAt: item.created_at,
+                        image: plantImages[item.name],
+                    },
+                }}
+                asChild
+            >
+                <Pressable>
+                    <View style={styles.plantContainer}>
+                        <View style={styles.plantInfo}>
+                            <Text style={styles.plantName} numberOfLines={1}>
+                                {item.name}
+                            </Text>
+                            <Text style={styles.plantSpecies} numberOfLines={1}>
+                                {item.species}
+                            </Text>
+                            <View style={styles.plantDetails}>
+                                <View style={styles.detailItem}>
+                                    <Ionicons
+                                        name="water-outline"
+                                        size={16}
+                                        color={COLOR_PRIMARY}
+                                    />
+                                    <Text style={styles.detailText}>
+                                        {item.watering_frequency}
+                                    </Text>
+                                </View>
+                                <View style={styles.detailItem}>
+                                    <Ionicons
+                                        name="sunny-outline"
+                                        size={16}
+                                        color={COLOR_PRIMARY}
+                                    />
+                                    <Text style={styles.detailText}>
+                                        {item.light_requirements}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                        <View>
+                            <Image
+                                source={{
+                                    uri:
+                                        plantImages[item.name] ||
+                                        'https://via.placeholder.com/90',
+                                }}
+                                style={styles.imagePreview}
+                                transition={300}
+                            />
+                        </View>
+                    </View>
+                </Pressable>
+            </Link>
+        </TouchableOpacity>
+    )
+
     return (
         <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.headerText}>Your plants</Text>
+                <TouchableOpacity style={styles.headerButton}>
+                    <Link href={'/addPlant'}>
+                        <Ionicons
+                            name="add-circle-outline"
+                            size={30}
+                            color="#fff"
+                        />
+                    </Link>
+                </TouchableOpacity>
+            </View>
+
             {loading ? (
-                <View
-                    style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}
-                >
-                    <ActivityIndicator size="large" color={'#228B22'} />
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={COLOR_PRIMARY} />
                 </View>
             ) : (
-                <>
-                    <View style={styles.header}>
-                        <Text style={styles.headerText}>Your plants</Text>
-                        <TouchableOpacity style={styles.headerButton}>
-                            <Link href={'/addPlant'}>
-                                <Ionicons
-                                    name="add-circle-outline"
-                                    size={30}
-                                    color="#fff"
-                                />
-                            </Link>
-                        </TouchableOpacity>
-                    </View>
-
-                    <FlatList
-                        data={plants}
-                        keyExtractor={(item) => item.id.toString()}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity>
-                                <Link
-                                    href={{
-                                        pathname: '/plantDetails',
-                                        params: {
-                                            name: item.name,
-                                            species: item.species,
-                                            lightRequirements:
-                                                item.light_requirements,
-                                            wateringFrequency:
-                                                item.watering_frequency,
-                                            createdAt: item.created_at,
-                                            image: plantImages[item.name],
-                                        },
-                                    }}
-                                >
-                                    <View style={styles.plantContainer}>
-                                        <View style={styles.plantHeader}>
-                                            <Text style={styles.plantName}>
-                                                {item.name}
-                                            </Text>
-                                            <Text style={styles.plantSpecies}>
-                                                {item.species}
-                                            </Text>
-                                        </View>
-                                        <View style={styles.plantImage}>
-                                            <Image
-                                                source={{
-                                                    uri: plantImages[item.name],
-                                                }}
-                                                style={styles.imagePreview}
-                                            />
-                                        </View>
-                                    </View>
-                                </Link>
-                            </TouchableOpacity>
-                        )}
-                    />
-                </>
+                <FlatList
+                    data={plants}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={renderPlantItem}
+                    ListEmptyComponent={renderEmptyState}
+                    contentContainerStyle={styles.listContainer}
+                    showsVerticalScrollIndicator={false}
+                />
             )}
         </SafeAreaView>
     )
@@ -206,69 +243,113 @@ export default function PlantsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingVertical: 15,
-        paddingHorizontal: 20,
-        backgroundColor: '#FAFAFA',
+        backgroundColor: '#F5F7FA',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        backgroundColor: '#FFF',
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E9F0',
     },
     headerText: {
         fontSize: 28,
-        fontWeight: 'bold',
-        color: '#222',
+        fontWeight: '700',
+        color: '#2E3440',
     },
     headerButton: {
         width: 48,
         height: 48,
         backgroundColor: COLOR_PRIMARY,
         borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+        shadowColor: COLOR_PRIMARY,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    listContainer: {
+        padding: 16,
+        paddingBottom: 32,
+    },
+    plantTouchable: {
+        marginBottom: 16,
+        borderRadius: 16,
+        backgroundColor: '#FFF',
+        elevation: 3,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 6,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    plantContainer: {
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        padding: 16,
-        marginBottom: 12,
-        borderRadius: 12,
-        backgroundColor: '#FFF',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.1,
         shadowRadius: 8,
-        elevation: 5,
-    },
-    plantHeader: {
         flex: 1,
     },
-    plantName: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    plantSpecies: {
-        fontSize: 14,
-        color: '#666',
-    },
-    plantImage: {
-        justifyContent: 'center',
-        alignItems: 'center',
+    plantContainer: {
+        flexDirection: 'row',
+        padding: 12,
     },
     imagePreview: {
         width: 90,
         height: 90,
-        borderRadius: 8,
-        borderWidth: 0.5,
-        borderColor: '#CCC',
+        borderRadius: 12,
+        backgroundColor: '#F5F7FA',
+    },
+    plantInfo: {
+        flex: 1,
+        justifyContent: 'flex-start',
+    },
+    plantName: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#2E3440',
+        marginBottom: 4,
+    },
+    plantSpecies: {
+        fontSize: 14,
+        color: '#4C566A',
+        marginBottom: 8,
+    },
+    plantDetails: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    detailItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    detailText: {
+        fontSize: 12,
+        color: '#4C566A',
+    },
+    emptyState: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 32,
+        paddingVertical: 64,
+    },
+    emptyStateTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#2E3440',
+        marginTop: 16,
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    emptyStateSubtitle: {
+        fontSize: 14,
+        color: '#4C566A',
+        textAlign: 'center',
     },
 })
