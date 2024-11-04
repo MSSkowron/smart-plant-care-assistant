@@ -6,3 +6,6 @@ export const COLOR_TERTIARY = '#A3EBB1'
 // https://www.canva.com/colors/color-palettes/healthy-leaves/
 export const COLOR_BLUE = '#21B6A8'
 export const COLOR_YELLOW = '#ECF87F'
+
+export const COLOR_TEXT_PRIMARY = '#000000'
+export const COLOR_TEXT_SECONDARY = '#606060'

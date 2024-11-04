@@ -7,7 +7,6 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
-    Dimensions,
     Pressable,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -18,7 +17,6 @@ import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 
 import { COLOR_PRIMARY } from '@/assets/colors'
-const SCREEN_WIDTH = Dimensions.get('window').width
 
 export default function PlantsScreen() {
     const { session } = useAuth()
