@@ -15,7 +15,6 @@ updates:
       - dependency-type: "all"
     # Labels on pull requests for version updates
     labels:
-      - "npm dependencies"
       - "dependencies"
     # Assign reviewers
     reviewers:
