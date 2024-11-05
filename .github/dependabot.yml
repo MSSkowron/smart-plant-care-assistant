@@ -30,3 +30,8 @@ updates:
       prefix: "npm"
       prefix-development: "npm dev"
       include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
