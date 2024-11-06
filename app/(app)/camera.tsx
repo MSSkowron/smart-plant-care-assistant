@@ -50,7 +50,7 @@ export default function CameraComponent() {
             const photo = await camera.current.takePictureAsync({
                 quality: 1,
                 base64: true,
-                exif: true,
+                exif: false,
             })
 
             if (!photo?.uri) {

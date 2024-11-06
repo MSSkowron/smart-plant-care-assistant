@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import {
     View,
     Text,
@@ -6,26 +6,32 @@ import {
     ScrollView,
     Dimensions,
     TouchableOpacity,
-    SafeAreaView,
+    Platform,
+    Alert,
 } from 'react-native'
 import { Image } from 'expo-image'
-import { useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
+import { supabase } from '@/utils/supabase'
 import {
     COLOR_PRIMARY,
     COLOR_SECONDARY,
     COLOR_TEXT_PRIMARY,
     COLOR_TEXT_SECONDARY,
 } from '@/assets/colors'
-import { Ionicons } from '@expo/vector-icons'
 
-const SCREEN_WIDTH = Dimensions.get('window').width
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function PlantDetails() {
+    const router = useRouter()
     const {
+        id,
         name,
         species,
         lightRequirements,
         wateringFrequency,
+        lastWatered,
         createdAt,
         image,
     } = useLocalSearchParams()
@@ -40,6 +46,87 @@ export default function PlantDetails() {
             day: 'numeric',
         })
     }
+
+    const getDaysSinceLastWatered = () => {
+        if (!lastWatered) return 'Never watered'
+
+        const lastWateredDate = new Date(lastWatered as string)
+        const now = new Date()
+
+        const diffTime = now.getTime() - lastWateredDate.getTime()
+
+        const diffHours = diffTime / (1000 * 60 * 60)
+
+        if (diffHours < 24) {
+            if (diffHours < 1) {
+                const diffMinutes = Math.floor(diffTime / (1000 * 60))
+                if (diffMinutes < 1) {
+                    return 'Just now'
+                }
+                return `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`
+            }
+            const hours = Math.floor(diffHours)
+            return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`
+        }
+
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+        return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
+    }
+
+    const handleWaterPlant = useCallback(async () => {
+        try {
+            const now = new Date()
+            const formattedDate = now.toISOString()
+
+            const { error } = await supabase
+                .from('plants')
+                .update({ last_watered: formattedDate })
+                .eq('id', id)
+
+            if (error) throw error
+            Alert.alert('Success', 'Plant watered successfully!')
+            router.replace('/plants')
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to water plant')
+        }
+    }, [id])
+
+    const handleDeletePlant = useCallback(() => {
+        Alert.alert(
+            'Delete Plant',
+            'Are you sure you want to delete this plant?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const { error } = await supabase
+                                .from('plants')
+                                .delete()
+                                .eq('id', id)
+
+                            if (error) throw error
+                            Alert.alert(
+                                'Success',
+                                'Plant deleted successfully!',
+                            )
+                            router.replace('/plants')
+                        } catch (error: any) {
+                            Alert.alert(
+                                'Error',
+                                error.message || 'Failed to delete plant',
+                            )
+                        }
+                    },
+                },
+            ],
+        )
+    }, [id])
 
     const renderDetailCard = (
         icon: string,
@@ -62,21 +149,19 @@ export default function PlantDetails() {
     )
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
             <ScrollView
                 style={styles.container}
                 showsVerticalScrollIndicator={false}
+                bounces={false}
+                contentContainerStyle={styles.scrollContent}
             >
                 <View style={styles.imageSection}>
                     {imageString ? (
                         <Image
-                            source={{
-                                uri:
-                                    imageString ||
-                                    'https://via.placeholder.com/90',
-                            }}
+                            source={{ uri: imageString }}
                             style={styles.image}
-                            contentFit="contain"
+                            contentFit="cover"
                             transition={300}
                         />
                     ) : (
@@ -100,49 +185,70 @@ export default function PlantDetails() {
                     <View style={styles.detailsGrid}>
                         {renderDetailCard(
                             'water-outline',
-                            'Watering',
-                            wateringFrequency as string,
+                            'Watering Frequency',
+                            `Every ${wateringFrequency} days`,
                             '#0EA5E9',
                         )}
                         {renderDetailCard(
-                            'sunny-outline',
-                            'Light',
-                            lightRequirements as string,
-                            '#EAB308',
+                            'time-outline',
+                            'Last Watered',
+                            getDaysSinceLastWatered(),
+                            '#0EA5E9',
                         )}
                     </View>
 
-                    <View style={styles.dateContainer}>
-                        <Ionicons
-                            name="calendar-outline"
-                            size={20}
-                            color={COLOR_SECONDARY}
-                        />
-                        <Text style={styles.dateText}>
-                            Added: {formatDate(createdAt as string)}
-                        </Text>
+                    <View style={styles.detailsGrid}>
+                        {renderDetailCard(
+                            'sunny-outline',
+                            'Light Requirements',
+                            lightRequirements as string,
+                            '#EAB308',
+                        )}
+                        {renderDetailCard(
+                            'calendar-outline',
+                            'Added',
+                            formatDate(createdAt as string),
+                            COLOR_SECONDARY,
+                        )}
                     </View>
 
                     <View style={styles.actionButtons}>
                         <TouchableOpacity
+                            style={[styles.actionButton, styles.waterButton]}
+                            onPress={handleWaterPlant}
+                        >
+                            <Ionicons name="water" size={20} color="#FFF" />
+                            <Text style={styles.buttonText}>Water Now</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.secondaryButtons}>
+                        <TouchableOpacity
                             style={[styles.actionButton, styles.editButton]}
+                            onPress={() =>
+                                router.push({
+                                    pathname: '/', // TODO: Implement
+                                    params: { id },
+                                })
+                            }
                         >
                             <Ionicons
                                 name="create-outline"
                                 size={20}
                                 color="#FFF"
                             />
-                            <Text style={styles.buttonText}>Edit</Text>
+                            <Text style={styles.buttonText}>Edit Details</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.actionButton, styles.deleteButton]}
+                            onPress={handleDeletePlant}
                         >
                             <Ionicons
                                 name="trash-outline"
                                 size={20}
                                 color="#FFF"
                             />
-                            <Text style={styles.buttonText}>Delete</Text>
+                            <Text style={styles.buttonText}>Delete Plant</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -159,35 +265,31 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    header: {
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    backButton: {
-        padding: 8,
-        borderRadius: 12,
-        backgroundColor: '#FFF',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+    scrollContent: {
+        flexGrow: 1,
+        paddingTop: 0,
     },
     imageSection: {
-        justifyContent: 'center',
-        alignItems: 'center',
         width: SCREEN_WIDTH,
         height: SCREEN_WIDTH * 0.8,
         backgroundColor: '#FFF',
         marginBottom: 24,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 4,
+            },
+        }),
     },
     image: {
         flex: 1,
         width: '100%',
-        height: 'auto',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#F8FAFC',
     },
     placeholderContainer: {
         flex: 1,
@@ -218,7 +320,7 @@ const styles = StyleSheet.create({
     detailsGrid: {
         flexDirection: 'row',
         gap: 12,
-        marginBottom: 24,
+        marginBottom: 16,
     },
     detailCard: {
         flex: 1,
@@ -227,11 +329,17 @@ const styles = StyleSheet.create({
         padding: 16,
         backgroundColor: '#FFF',
         borderRadius: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     cardIcon: {
         marginRight: 12,
@@ -246,17 +354,11 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: COLOR_TEXT_PRIMARY,
     },
-    dateContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 32,
-    },
-    dateText: {
-        fontSize: 14,
-        color: COLOR_TEXT_SECONDARY,
-    },
     actionButtons: {
+        marginTop: 24,
+        marginBottom: 16,
+    },
+    secondaryButtons: {
         flexDirection: 'row',
         gap: 12,
         marginBottom: 32,
@@ -267,13 +369,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
+    },
+    waterButton: {
+        backgroundColor: '#0EA5E9',
     },
     editButton: {
         backgroundColor: COLOR_PRIMARY,
