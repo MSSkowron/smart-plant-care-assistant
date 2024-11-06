@@ -131,6 +131,7 @@ export type Database = {
                 Row: {
                     created_at: string
                     id: number
+                    last_watered: string | null
                     light_requirements: string
                     name: string
                     species: string
@@ -140,6 +141,7 @@ export type Database = {
                 Insert: {
                     created_at?: string
                     id?: number
+                    last_watered?: string | null
                     light_requirements: string
                     name: string
                     species: string
@@ -149,6 +151,7 @@ export type Database = {
                 Update: {
                     created_at?: string
                     id?: number
+                    last_watered?: string | null
                     light_requirements?: string
                     name?: string
                     species?: string
