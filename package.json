@@ -25,6 +25,7 @@
         "@shopify/flash-list": "~1.6.4",
         "@supabase/supabase-js": "^2.45.5",
         "@types/react-redux": "^7.1.34",
+        "date-fns": "^4.1.0",
         "expo": "~51.0.39",
         "expo-camera": "~15.0.16",
         "expo-constants": "~16.0.2",

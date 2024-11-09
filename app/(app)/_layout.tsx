@@ -83,6 +83,26 @@ export default function AppLayout() {
                     ),
                 }}
             />
+            <Stack.Screen
+                name="schedule"
+                options={{
+                    headerTitle: 'Watering Schedule',
+                    headerLeft: (props) => (
+                        <HeaderBackButton
+                            {...props}
+                            onPress={() => navigation.goBack()}
+                            label="Back"
+                            labelVisible={true}
+                            pressColor="transparent"
+                            tintColor="black"
+                            labelStyle={{
+                                fontWeight: 'bold',
+                                color: 'black',
+                            }}
+                        />
+                    ),
+                }}
+            />
         </Stack>
     )
 }
