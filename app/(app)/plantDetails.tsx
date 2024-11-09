@@ -20,6 +20,7 @@ import {
     COLOR_TEXT_PRIMARY,
     COLOR_TEXT_SECONDARY,
 } from '@/assets/colors'
+import { getNextWateringDate } from '@/utils/utils'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -73,23 +74,82 @@ export default function PlantDetails() {
         return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
     }
 
-    const handleWaterPlant = useCallback(async () => {
-        try {
-            const now = new Date()
-            const formattedDate = now.toISOString()
+    const handleWaterPlant = async () => {
+        const nextWatering = getNextWateringDate(
+            lastWatered as string,
+            Number(wateringFrequency as string),
+        )
 
-            const { error } = await supabase
-                .from('plants')
-                .update({ last_watered: formattedDate })
-                .eq('id', id)
+        if (nextWatering) {
+            const today = new Date()
+            const daysUntilWatering = Math.ceil(
+                (nextWatering.getTime() - today.getTime()) /
+                    (1000 * 60 * 60 * 24),
+            )
 
-            if (error) throw error
-            Alert.alert('Success', 'Plant watered successfully!')
-            router.replace('/plants')
-        } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to water plant')
+            if (daysUntilWatering > 0) {
+                Alert.alert(
+                    'Early Watering',
+                    `This plant is scheduled for watering in ${daysUntilWatering} days. Do you still want to water it now?`,
+                    [
+                        {
+                            text: 'Cancel',
+                            style: 'cancel',
+                        },
+                        {
+                            text: 'Water Now',
+                            onPress: async () => {
+                                try {
+                                    const now = new Date()
+                                    const formattedDate = now.toISOString()
+
+                                    const { error } = await supabase
+                                        .from('plants')
+                                        .update({ last_watered: formattedDate })
+                                        .eq('id', id as string)
+
+                                    if (error) throw error
+                                    Alert.alert(
+                                        'Success',
+                                        'Plant watered successfully!',
+                                    )
+                                    router.replace('/plants')
+                                } catch (error: any) {
+                                    Alert.alert(
+                                        'Error',
+                                        error.message ||
+                                            'Failed to water plant',
+                                    )
+                                }
+                            },
+                            style: 'default',
+                        },
+                    ],
+                    { cancelable: true },
+                )
+            } else {
+                // Plant needs watering, proceed without confirmation
+                try {
+                    const now = new Date()
+                    const formattedDate = now.toISOString()
+
+                    const { error } = await supabase
+                        .from('plants')
+                        .update({ last_watered: formattedDate })
+                        .eq('id', id as string)
+
+                    if (error) throw error
+                    Alert.alert('Success', 'Plant watered successfully!')
+                    router.replace('/plants')
+                } catch (error: any) {
+                    Alert.alert(
+                        'Error',
+                        error.message || 'Failed to water plant',
+                    )
+                }
+            }
         }
-    }, [id])
+    }
 
     const handleDeletePlant = useCallback(() => {
         Alert.alert(

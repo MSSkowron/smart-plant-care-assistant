@@ -18,6 +18,7 @@ import { useAuth } from '@/contextes/AuthContext'
 import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 import { COLOR_PRIMARY } from '@/assets/colors'
+import { getNextWateringDate } from '@/utils/utils'
 
 interface WateringStatus {
     daysUntil: number
@@ -119,10 +120,11 @@ export default function MyPlantsScreen() {
     const [plants, setPlants] = useState<Plant[]>([])
     const [plantImages, setPlantImages] = useState<Record<string, string>>({})
     const [searchQuery, setSearchQuery] = useState('')
+
+    const [isLoading, setIsLoading] = useState<boolean>(true)
     const [isRefreshing, setIsRefreshing] = React.useState(false)
 
     const fetchPlants = async () => {
-        setIsRefreshing(true)
         try {
             const { data, error } = await supabase
                 .from('plants')
@@ -134,12 +136,11 @@ export default function MyPlantsScreen() {
             Alert.alert('Error', error.message || 'Failed to fetch plants')
         } finally {
             setIsRefreshing(false)
+            setIsLoading(false)
         }
     }
 
     const fetchImages = async () => {
-        setIsRefreshing(true)
-
         const { data, error } = await supabase.storage
             .from('user-plant-images')
             .list(userID)
@@ -165,22 +166,82 @@ export default function MyPlantsScreen() {
             )
             setPlantImages(imagesByPlant)
         }
-
-        setIsRefreshing(false)
     }
 
-    const handleWaterPlant = async (plantId: number) => {
-        try {
-            const { error } = await supabase
-                .from('plants')
-                .update({ last_watered: new Date().toISOString() })
-                .eq('id', plantId)
+    const handleWaterPlant = async (plant: Plant) => {
+        const nextWatering = getNextWateringDate(
+            plant.last_watered,
+            plant.watering_frequency,
+        )
 
-            if (error) throw error
-            await fetchPlants()
-            Alert.alert('Success', 'Plant watered successfully!')
-        } catch (error: any) {
-            Alert.alert('Error', error.message || 'Failed to water plant')
+        if (nextWatering) {
+            const today = new Date()
+            const daysUntilWatering = Math.ceil(
+                (nextWatering.getTime() - today.getTime()) /
+                    (1000 * 60 * 60 * 24),
+            )
+
+            if (daysUntilWatering > 0) {
+                Alert.alert(
+                    'Early Watering',
+                    `This plant is scheduled for watering in ${daysUntilWatering} days. Do you still want to water it now?`,
+                    [
+                        {
+                            text: 'Cancel',
+                            style: 'cancel',
+                        },
+                        {
+                            text: 'Water Now',
+                            onPress: async () => {
+                                try {
+                                    const now = new Date()
+                                    const formattedDate = now.toISOString()
+
+                                    const { error } = await supabase
+                                        .from('plants')
+                                        .update({ last_watered: formattedDate })
+                                        .eq('id', plant.id)
+
+                                    if (error) throw error
+                                    Alert.alert(
+                                        'Success',
+                                        'Plant watered successfully!',
+                                    )
+                                    fetchPlants()
+                                } catch (error: any) {
+                                    Alert.alert(
+                                        'Error',
+                                        error.message ||
+                                            'Failed to water plant',
+                                    )
+                                }
+                            },
+                            style: 'default',
+                        },
+                    ],
+                    { cancelable: true },
+                )
+            } else {
+                // Plant needs watering, proceed without confirmation
+                try {
+                    const now = new Date()
+                    const formattedDate = now.toISOString()
+
+                    const { error } = await supabase
+                        .from('plants')
+                        .update({ last_watered: formattedDate })
+                        .eq('id', plant.id)
+
+                    if (error) throw error
+                    Alert.alert('Success', 'Plant watered successfully!')
+                    fetchPlants()
+                } catch (error: any) {
+                    Alert.alert(
+                        'Error',
+                        error.message || 'Failed to water plant',
+                    )
+                }
+            }
         }
     }
 
@@ -304,7 +365,7 @@ export default function MyPlantsScreen() {
                                     styles.waterButton,
                                     { backgroundColor: statusStyle.iconColor },
                                 ]}
-                                onPress={() => handleWaterPlant(item.id)}
+                                onPress={() => handleWaterPlant(item)}
                             >
                                 <Ionicons
                                     name="water"
@@ -316,6 +377,14 @@ export default function MyPlantsScreen() {
                     </View>
                 </View>
             </TouchableOpacity>
+        )
+    }
+
+    if (isLoading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLOR_PRIMARY} />
+            </View>
         )
     }
 
@@ -385,7 +454,10 @@ export default function MyPlantsScreen() {
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefreshing}
-                        onRefresh={fetchPlants}
+                        onRefresh={() => {
+                            setIsRefreshing(true)
+                            fetchPlants()
+                        }}
                         tintColor={COLOR_PRIMARY}
                         colors={[COLOR_PRIMARY]}
                     />
@@ -396,14 +468,14 @@ export default function MyPlantsScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-    },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    container: {
+        flex: 1,
+        backgroundColor: '#F5F7FA',
     },
     header: {
         flexDirection: 'row',
