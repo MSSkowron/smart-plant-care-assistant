@@ -9,6 +9,7 @@ import {
     Alert,
     TextInput,
     Platform,
+    RefreshControl,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -117,12 +118,11 @@ export default function MyPlantsScreen() {
 
     const [plants, setPlants] = useState<Plant[]>([])
     const [plantImages, setPlantImages] = useState<Record<string, string>>({})
-    const [loading, setLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
-    const [refreshing, setRefreshing] = useState(false)
+    const [isRefreshing, setIsRefreshing] = React.useState(false)
 
     const fetchPlants = async () => {
-        setLoading(true)
+        setIsRefreshing(true)
         try {
             const { data, error } = await supabase
                 .from('plants')
@@ -133,11 +133,13 @@ export default function MyPlantsScreen() {
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to fetch plants')
         } finally {
-            setLoading(false)
+            setIsRefreshing(false)
         }
     }
 
     const fetchImages = async () => {
+        setIsRefreshing(true)
+
         const { data, error } = await supabase.storage
             .from('user-plant-images')
             .list(userID)
@@ -163,6 +165,8 @@ export default function MyPlantsScreen() {
             )
             setPlantImages(imagesByPlant)
         }
+
+        setIsRefreshing(false)
     }
 
     const handleWaterPlant = async (plantId: number) => {
@@ -181,8 +185,10 @@ export default function MyPlantsScreen() {
     }
 
     useEffect(() => {
-        fetchPlants()
-        fetchImages()
+        const fetch = async () => {
+            await fetchPlants()
+            await fetchImages()
+        }
 
         const subscription = supabase
             .channel('public:plants')
@@ -214,6 +220,8 @@ export default function MyPlantsScreen() {
                 },
             )
             .subscribe()
+
+        fetch()
 
         return () => {
             supabase.removeChannel(subscription)
@@ -350,14 +358,6 @@ export default function MyPlantsScreen() {
             plant.species.toLowerCase().includes(searchQuery.toLowerCase()),
     )
 
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLOR_PRIMARY} />
-            </View>
-        )
-    }
-
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -382,8 +382,14 @@ export default function MyPlantsScreen() {
                 ListEmptyComponent={renderEmptyState}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
-                onRefresh={fetchPlants}
-                refreshing={refreshing}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefreshing}
+                        onRefresh={fetchPlants}
+                        tintColor={COLOR_PRIMARY}
+                        colors={[COLOR_PRIMARY]}
+                    />
+                }
             />
         </SafeAreaView>
     )
