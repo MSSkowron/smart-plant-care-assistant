@@ -446,9 +446,9 @@ export default function MyPlantsScreen() {
             <FlatList
                 data={filteredPlants}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={renderPlantItem}
-                ListHeaderComponent={renderHeader}
-                ListEmptyComponent={renderEmptyState}
+                renderItem={(item) => renderPlantItem(item)}
+                ListHeaderComponent={renderHeader()}
+                ListEmptyComponent={renderEmptyState()}
                 contentContainerStyle={styles.listContainer}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
