@@ -246,6 +246,7 @@ export default function MyPlantsScreen() {
     }
 
     useEffect(() => {
+        console.log('Fetching data')
         const fetch = async () => {
             await fetchPlants()
             await fetchImages()
@@ -457,6 +458,7 @@ export default function MyPlantsScreen() {
                         onRefresh={() => {
                             setIsRefreshing(true)
                             fetchPlants()
+                            fetchImages()
                         }}
                         tintColor={COLOR_PRIMARY}
                         colors={[COLOR_PRIMARY]}
