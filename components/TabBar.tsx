@@ -1,6 +1,5 @@
 import { View, StyleSheet } from 'react-native'
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import React from 'react'
 import TabBarButton from './TabBarButton'
 
 const TabBar: React.FC<BottomTabBarProps> = ({

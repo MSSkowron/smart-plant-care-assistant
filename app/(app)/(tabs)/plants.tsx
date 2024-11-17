@@ -19,6 +19,7 @@ import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 import { COLOR_PRIMARY } from '@/assets/colors'
 import { getNextWateringDate } from '@/utils/utils'
+import { useNotifications } from '@/hooks/useNotification'
 
 interface WateringStatus {
     daysUntil: number
@@ -116,6 +117,7 @@ export default function MyPlantsScreen() {
     const { session } = useAuth()
     const router = useRouter()
     const userID = session!.user.id
+    const { scheduleNotifications, cancelNotifications } = useNotifications()
 
     const [plants, setPlants] = useState<Plant[]>([])
     const [plantImages, setPlantImages] = useState<Record<string, string>>({})

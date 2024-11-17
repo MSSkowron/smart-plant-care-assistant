@@ -21,10 +21,13 @@ import {
     COLOR_TEXT_SECONDARY,
 } from '@/assets/colors'
 import { getNextWateringDate } from '@/utils/utils'
+import { useNotifications } from '@/hooks/useNotification'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
 export default function PlantDetails() {
+    const { scheduleNotifications, cancelNotifications, notificationState } =
+        useNotifications()
     const router = useRouter()
     const {
         id,
@@ -109,11 +112,25 @@ export default function PlantDetails() {
                                         .eq('id', id as string)
 
                                     if (error) throw error
+
+                                    // Reschedule notifications after watering
+                                    const { data: updatedPlant } =
+                                        await supabase
+                                            .from('plants')
+                                            .select('*')
+                                            .eq('id', id)
+                                            .single()
+
+                                    if (updatedPlant) {
+                                        await scheduleNotifications(
+                                            updatedPlant,
+                                        )
+                                    }
+
                                     Alert.alert(
                                         'Success',
                                         'Plant watered successfully!',
                                     )
-                                    router.replace('/plants')
                                 } catch (error: any) {
                                     Alert.alert(
                                         'Error',
@@ -139,8 +156,19 @@ export default function PlantDetails() {
                         .eq('id', id as string)
 
                     if (error) throw error
+
+                    // Reschedule notifications after watering
+                    const { data: updatedPlant } = await supabase
+                        .from('plants')
+                        .select('*')
+                        .eq('id', id)
+                        .single()
+
+                    if (updatedPlant) {
+                        await scheduleNotifications(updatedPlant)
+                    }
+
                     Alert.alert('Success', 'Plant watered successfully!')
-                    router.replace('/plants')
                 } catch (error: any) {
                     Alert.alert(
                         'Error',

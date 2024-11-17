@@ -19,6 +19,7 @@ import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import { useImage } from '@/store/hooks'
 import { COLOR_PRIMARY } from '@/assets/colors'
+import { useNotifications } from '@/hooks/useNotification'
 
 interface plantData {
     name: string | undefined
@@ -31,6 +32,8 @@ const plantNetAPIKey = process.env.EXPO_PUBLIC_PLANTNET_API_KEY || ''
 const { width } = Dimensions.get('window')
 
 export default function AddPlant() {
+    const { scheduleNotifications, cancelNotifications, notificationState } =
+        useNotifications()
     const router = useRouter()
     const { session } = useAuth()
     const userID = session!.user.id
@@ -180,15 +183,28 @@ export default function AddPlant() {
 
         setLoading(true)
         try {
-            const { error } = await supabase.from('plants').insert({
-                name: plantData.name!,
-                species: plantData.species!,
-                light_requirements: plantData.lightRequirements!,
-                watering_frequency: parseInt(plantData.wateringFrequency!, 10),
-                user_id: userID,
-            })
+            const { data, error } = await supabase
+                .from('plants')
+                .insert({
+                    name: plantData.name!,
+                    species: plantData.species!,
+                    light_requirements: plantData.lightRequirements!,
+                    watering_frequency: parseInt(
+                        plantData.wateringFrequency!,
+                        10,
+                    ),
+                    user_id: userID,
+                    last_watered: new Date().toDateString(),
+                })
+                .select()
+                .single()
 
             if (error) throw new Error(error.message)
+
+            // Schedule notifications for the new plant
+            if (data) {
+                await scheduleNotifications(data)
+            }
 
             await uploadImage(image!)
             Alert.alert('Success', 'Plant added successfully!', [

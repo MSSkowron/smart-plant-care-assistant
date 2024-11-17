@@ -67,12 +67,22 @@ Follow these steps to set up and run the app on your local environment.
 
     These variables are essential for backend communication and plant identification functionality.
 
-4. **Start the Application**
+4. **Build the Application**
+
+    ```bash
+    npm run build
+    ```
+
+    This command uses Expo Application Services (EAS) to build the app. Ensure you are logged into your EAS account before proceeding.
+
+    Upon completion, a QR code and a download link will be provided. Use them to download the app to your desired device.
+
+5. **Start the Server**
 
     Launch the Expo development server:
 
     ```bash
-     npx expo start
+    npm run start
     ```
 
     In the output, you'll find options to open the app in:
@@ -81,6 +91,16 @@ Follow these steps to set up and run the app on your local environment.
     - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
     - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
     - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+
+    Alternatively, you can start the server using a tunnel to expose the app over a public URL:
+
+    ```bash
+    npm run start-tunnel
+    ```
+
+6. **Run the Application**
+
+    Once the server is running, open the app on your device using the provided QR code or link.
 
 ### Development Tools
 
