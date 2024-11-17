@@ -15,7 +15,7 @@ import { Image } from 'expo-image'
 import { AntDesign, MaterialIcons } from '@expo/vector-icons'
 import { NativeStackScreenProps } from 'react-native-screens/lib/typescript/native-stack/types'
 
-const imagePath = require('@/assets/images/icon.jpg')
+const imagePath = require('@/assets/images/icon.png')
 
 type RootStackParamList = {
     SignIn: undefined

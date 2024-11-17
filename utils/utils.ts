@@ -1,3 +1,4 @@
+import { DateTriggerInput } from 'expo-notifications'
 import { addDays, parseISO } from 'date-fns'
 
 // Function to calculate next watering date
@@ -44,5 +45,40 @@ export const getStatusInfo = (nextWateringDate: Date | null) => {
         status: 'On track',
         bgColor: '#F0FFF4',
         icon: 'checkmark-circle',
+    }
+}
+
+export function getTriggerDate(trigger: DateTriggerInput): Date {
+    if (trigger instanceof Date) {
+        return trigger
+    }
+    if (typeof trigger === 'number') {
+        return new Date(trigger)
+    }
+    if (typeof trigger === 'object' && 'date' in trigger) {
+        const date = trigger.date
+        if (date instanceof Date) {
+            return date
+        }
+        return new Date(date)
+    }
+    throw new Error('Invalid trigger date format')
+}
+
+export function isValidTrigger(trigger: DateTriggerInput): boolean {
+    try {
+        const date = getTriggerDate(trigger)
+        return date instanceof Date && !isNaN(date.getTime())
+    } catch {
+        return false
+    }
+}
+
+export function isFutureTrigger(trigger: DateTriggerInput): boolean {
+    try {
+        const date = getTriggerDate(trigger)
+        return date > new Date()
+    } catch {
+        return false
     }
 }

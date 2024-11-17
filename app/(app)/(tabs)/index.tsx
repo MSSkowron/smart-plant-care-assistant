@@ -15,8 +15,11 @@ import { router } from 'expo-router'
 import { Plant, supabase } from '@/utils/supabase'
 import { getNextWateringDate } from '@/utils/utils'
 import { format } from 'date-fns'
+import { useNotifications } from '@/hooks/useNotification'
 
 export default function HomeScreen() {
+    const { scheduleNotifications, cancelNotifications, notificationState } =
+        useNotifications()
     const { user } = useAuth()
     const [plants, setPlants] = useState<Plant[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -56,6 +59,21 @@ export default function HomeScreen() {
                                         .eq('id', plant.id)
 
                                     if (error) throw error
+
+                                    // Reschedule notifications after watering
+                                    const { data: updatedPlant } =
+                                        await supabase
+                                            .from('plants')
+                                            .select('*')
+                                            .eq('id', plant.id)
+                                            .single()
+
+                                    if (updatedPlant) {
+                                        await scheduleNotifications(
+                                            updatedPlant,
+                                        )
+                                    }
+
                                     Alert.alert(
                                         'Success',
                                         'Plant watered successfully!',
@@ -86,6 +104,18 @@ export default function HomeScreen() {
                         .eq('id', plant.id)
 
                     if (error) throw error
+
+                    // Reschedule notifications after watering
+                    const { data: updatedPlant } = await supabase
+                        .from('plants')
+                        .select('*')
+                        .eq('id', plant.id)
+                        .single()
+
+                    if (updatedPlant) {
+                        await scheduleNotifications(updatedPlant)
+                    }
+
                     Alert.alert('Success', 'Plant watered successfully!')
                     fetchPlants()
                 } catch (error: any) {

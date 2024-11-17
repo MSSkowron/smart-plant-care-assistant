@@ -74,7 +74,3 @@ yarn-error.log
 
 expo-env.d.ts
 # @end expo-cli
-
-# Google Service Account JSON
-smart-plant-care-assista-efec7-firebase-adminsdk-n6aix-8769095f7f.json
-google-services.json
