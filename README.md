@@ -92,15 +92,13 @@ Follow these steps to set up and run the app on your local environment.
     - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
     - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
+    Once the server is running, open the app on your device using the provided QR code or link.
+
     Alternatively, you can start the server using a tunnel to expose the app over a public URL:
 
     ```bash
     npm run start-tunnel
     ```
-
-6. **Run the Application**
-
-    Once the server is running, open the app on your device using the provided QR code or link.
 
 ### Development Tools
 
