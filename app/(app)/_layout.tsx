@@ -1,12 +1,9 @@
-import { Redirect, Stack, useNavigation } from 'expo-router'
+import { Redirect, Stack } from 'expo-router'
 import React from 'react'
 
 import { useAuth } from '@/contextes/AuthContext'
-import { HeaderBackButton } from '@react-navigation/elements'
 
 export default function AppLayout() {
-    const navigation = useNavigation()
-
     const { session } = useAuth()
     if (!session) {
         return <Redirect href={'/signin'} />
@@ -21,40 +18,22 @@ export default function AppLayout() {
                     headerShown: true,
                     headerTitle: '',
                     headerTransparent: true,
-                    headerLeft: (props) => (
-                        <HeaderBackButton
-                            {...props}
-                            onPress={() => navigation.goBack()}
-                            label="Back"
-                            labelVisible={true}
-                            tintColor="white"
-                            pressColor="transparent"
-                            labelStyle={{
-                                fontWeight: 'bold',
-                                color: 'white',
-                            }}
-                        />
-                    ),
+                    headerBackVisible: true,
+                    headerTintColor: 'white',
+                    headerBackTitleStyle: {
+                        fontSize: 16,
+                    },
                 }}
             />
             <Stack.Screen
                 name="addPlant"
                 options={{
                     headerTitle: '',
-                    headerLeft: (props) => (
-                        <HeaderBackButton
-                            {...props}
-                            onPress={() => navigation.goBack()}
-                            label="Back"
-                            labelVisible={true}
-                            pressColor="transparent"
-                            tintColor="black"
-                            labelStyle={{
-                                fontWeight: 'bold',
-                                color: 'black',
-                            }}
-                        />
-                    ),
+                    headerBackVisible: true,
+                    headerTintColor: 'black',
+                    headerBackTitleStyle: {
+                        fontSize: 16,
+                    },
                 }}
             />
             <Stack.Screen
@@ -67,40 +46,22 @@ export default function AppLayout() {
                         fontSize: 18,
                         color: 'black',
                     },
-                    headerLeft: (props) => (
-                        <HeaderBackButton
-                            {...props}
-                            onPress={() => navigation.goBack()}
-                            label="Back"
-                            labelVisible={true}
-                            pressColor="transparent"
-                            tintColor="black"
-                            labelStyle={{
-                                fontWeight: 'bold',
-                                color: 'black',
-                            }}
-                        />
-                    ),
+                    headerBackVisible: true,
+                    headerTintColor: 'black',
+                    headerBackTitleStyle: {
+                        fontSize: 16,
+                    },
                 }}
             />
             <Stack.Screen
                 name="schedule"
                 options={{
                     headerTitle: 'Watering Schedule',
-                    headerLeft: (props) => (
-                        <HeaderBackButton
-                            {...props}
-                            onPress={() => navigation.goBack()}
-                            label="Back"
-                            labelVisible={true}
-                            pressColor="transparent"
-                            tintColor="black"
-                            labelStyle={{
-                                fontWeight: 'bold',
-                                color: 'black',
-                            }}
-                        />
-                    ),
+                    headerBackVisible: true,
+                    headerTintColor: 'black',
+                    headerBackTitleStyle: {
+                        fontSize: 16,
+                    },
                 }}
             />
         </Stack>

@@ -81,7 +81,7 @@ export default function AddPlant() {
                     updateImage(result.assets[0].uri)
                 }
             } else {
-                router.push('/camera')
+                router.navigate('/camera')
             }
         } catch (error) {
             handleError(error)

@@ -314,7 +314,7 @@ export default function PlantDetails() {
                         <TouchableOpacity
                             style={[styles.actionButton, styles.editButton]}
                             onPress={() =>
-                                router.push({
+                                router.navigate({
                                     pathname: '/', // TODO: Implement
                                     params: { id },
                                 })

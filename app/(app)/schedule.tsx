@@ -28,7 +28,7 @@ const EmptyState = () => (
         </Text>
         <TouchableOpacity
             style={styles.addButton}
-            onPress={() => router.push('/addPlant')}
+            onPress={() => router.navigate('/addPlant')}
         >
             <Ionicons name="add" size={20} color="#FFF" />
             <Text style={styles.addButtonText}>Add Your First Plant</Text>
