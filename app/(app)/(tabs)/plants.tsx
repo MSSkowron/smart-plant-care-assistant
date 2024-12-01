@@ -20,6 +20,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { COLOR_PRIMARY } from '@/assets/colors'
 import { getNextWateringDate } from '@/utils/utils'
 import { useNotifications } from '@/hooks/useNotification'
+import { useImage } from '@/store/hooks'
+import * as ImagePicker from 'expo-image-picker'
+import PlantHealthModal from '@/components/PlantHealthModal'
+import PlantHealthResultModal from '@/components/PlantHealthResultModal'
+
+const kindwiseAPIKey = process.env.EXPO_PUBLIC_KINDWISE_API_KEY || ''
 
 interface WateringStatus {
     daysUntil: number
@@ -117,7 +123,14 @@ export default function MyPlantsScreen() {
     const { session } = useAuth()
     const router = useRouter()
     const userID = session!.user.id
+
     const { scheduleNotifications, cancelNotifications } = useNotifications()
+
+    const { image, updateImage, clearImage } = useImage()
+    const [modalVisible, setModalVisible] = useState(false)
+    const [healthResult, setHealthResult] = useState<any>(null)
+    const [healthModalVisible, setHealthModalVisible] = useState(false)
+    const [healthCheckLoading, setHealthCheckLoading] = useState(false)
 
     const [plants, setPlants] = useState<Plant[]>([])
     const [plantImages, setPlantImages] = useState<Record<string, string>>({})
@@ -125,6 +138,76 @@ export default function MyPlantsScreen() {
 
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [isRefreshing, setIsRefreshing] = React.useState(false)
+
+    const plantHealthAPI = async (imageUri: string) => {
+        setHealthCheckLoading(true)
+        try {
+            const base64Image = await convertImageToBase64(imageUri)
+            const response = await fetch(
+                'https://plant.id/api/v3/health_assessment',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Api-Key': kindwiseAPIKey,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ images: [base64Image] }),
+                },
+            )
+
+            if (!response.ok) {
+                throw new Error(`API request failed: ${response.statusText}`)
+            }
+
+            const data = await response.json()
+            setHealthResult(data.result)
+            setHealthModalVisible(true)
+        } catch (error: any) {
+            Alert.alert(
+                'Error',
+                error.message || 'Failed to assess plant health.',
+            )
+        } finally {
+            setHealthCheckLoading(false)
+        }
+    }
+
+    const handleImageSelection = async (source: 'gallery' | 'camera') => {
+        setModalVisible(false)
+        if (source === 'gallery') {
+            const { status } =
+                await ImagePicker.requestMediaLibraryPermissionsAsync()
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'Gallery access is required.')
+                return
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                allowsEditing: true,
+                quality: 1,
+            })
+
+            if (!result.canceled) {
+                const imageUri = result.assets[0].uri
+                updateImage(imageUri)
+            }
+        } else {
+            router.navigate('/camera')
+        }
+    }
+
+    const convertImageToBase64 = async (uri: string): Promise<string> => {
+        const response = await fetch(uri)
+        const blob = await response.blob()
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onloadend = () =>
+                resolve((reader.result as string).split(',')[1])
+            reader.onerror = () => reject(reader.error)
+            reader.readAsDataURL(blob)
+        })
+    }
 
     const fetchPlants = async () => {
         try {
@@ -248,6 +331,14 @@ export default function MyPlantsScreen() {
     }
 
     useEffect(() => {
+        if (image) {
+            plantHealthAPI(image)
+        }
+    }, [image])
+
+    useEffect(() => {
+        clearImage()
+
         const fetch = async () => {
             await fetchPlants()
             await fetchImages()
@@ -382,7 +473,7 @@ export default function MyPlantsScreen() {
         )
     }
 
-    if (isLoading) {
+    if (isLoading || healthCheckLoading) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={COLOR_PRIMARY} />
@@ -433,16 +524,34 @@ export default function MyPlantsScreen() {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.headerText}>Your Plants</Text>
-                <TouchableOpacity
-                    style={styles.headerButton}
-                    onPress={() => router.navigate('/addPlant')}
-                >
-                    <Ionicons
-                        name="add-circle-outline"
-                        size={30}
-                        color="#fff"
-                    />
-                </TouchableOpacity>
+                <View style={styles.headerButtons}>
+                    <TouchableOpacity
+                        style={[styles.headerButton, styles.headerButtonLeft]}
+                        onPress={() => setModalVisible(true)}
+                    >
+                        <View style={styles.buttonContent}>
+                            <Ionicons
+                                name="leaf-outline"
+                                size={22}
+                                color="#fff"
+                            />
+                            <Text style={styles.buttonText}>Health</Text>
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.headerButton, styles.headerButtonRight]}
+                        onPress={() => router.navigate('/addPlant')}
+                    >
+                        <View style={styles.buttonContent}>
+                            <Ionicons
+                                name="add-outline"
+                                size={22}
+                                color="#fff"
+                            />
+                            <Text style={styles.buttonText}>Add</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <FlatList
@@ -466,6 +575,20 @@ export default function MyPlantsScreen() {
                     />
                 }
             />
+
+            <PlantHealthModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                onGalleryPress={() => handleImageSelection('gallery')}
+                onCameraPress={() => handleImageSelection('camera')}
+            />
+            {healthResult && (
+                <PlantHealthResultModal
+                    visible={healthModalVisible}
+                    onClose={() => setHealthModalVisible(false)}
+                    result={healthResult}
+                />
+            )}
         </SafeAreaView>
     )
 }
@@ -506,11 +629,14 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#2E3440',
     },
+    headerButtons: {
+        flexDirection: 'row',
+        gap: 8,
+    },
     headerButton: {
-        width: 48,
-        height: 48,
+        height: 40,
+        paddingHorizontal: 16,
         backgroundColor: COLOR_PRIMARY,
-        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
         ...Platform.select({
@@ -524,6 +650,24 @@ const styles = StyleSheet.create({
                 elevation: 4,
             },
         }),
+    },
+    headerButtonLeft: {
+        borderRadius: 20,
+        backgroundColor: '#10B981', // A nice green color for health check
+    },
+    headerButtonRight: {
+        borderRadius: 20,
+        backgroundColor: COLOR_PRIMARY,
+    },
+    buttonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
     },
     searchContainer: {
         flexDirection: 'row',

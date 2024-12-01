@@ -58,12 +58,14 @@ Follow these steps to set up and run the app on your local environment.
     - `EXPO_PUBLIC_SUPABASE_URL="your-supabase-url"`
     - `EXPO_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"`
     - `EXPO_PUBLIC_PLANTNET_API_KEY="your-plantnet-api-key"`
+    - `EXPO_PUBLIC_KINDWISE_API_KEY="your-kindwise-api-key"`
 
     Replace each placeholder with your actual credentials:
 
     - `your-supabase-url`: Your Supabase project URL.
     - `your-supabase-anon-key`: Your Supabase anonymous API key.
     - `your-plantnet-api-key`: Your PlantNet API key.
+    - `your-kindwise-api-key`: Your Kindwise API key.
 
     These variables are essential for backend communication and plant identification functionality.
 
