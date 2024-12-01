@@ -195,7 +195,7 @@ export default function HomeScreen() {
                         {plants.length > 3 && (
                             <TouchableOpacity
                                 style={styles.viewAllButton}
-                                onPress={() => router.push('/schedule')}
+                                onPress={() => router.navigate('/schedule')}
                             >
                                 <Text style={styles.viewAllText}>View all</Text>
                                 <Ionicons
@@ -280,7 +280,7 @@ export default function HomeScreen() {
                                 styles.actionItem,
                                 { borderColor: COLOR_PRIMARY },
                             ]}
-                            onPress={() => router.push('/addPlant')}
+                            onPress={() => router.navigate('/addPlant')}
                         >
                             <Ionicons
                                 name="add-circle-outline"
@@ -301,7 +301,7 @@ export default function HomeScreen() {
                                 styles.actionItem,
                                 { borderColor: COLOR_PRIMARY },
                             ]}
-                            onPress={() => router.push('/schedule')}
+                            onPress={() => router.navigate('/schedule')}
                         >
                             <Ionicons
                                 name="calendar-outline"

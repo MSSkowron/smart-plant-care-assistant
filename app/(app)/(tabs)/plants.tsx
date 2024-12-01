@@ -248,7 +248,6 @@ export default function MyPlantsScreen() {
     }
 
     useEffect(() => {
-        console.log('Fetching data')
         const fetch = async () => {
             await fetchPlants()
             await fetchImages()
@@ -301,7 +300,7 @@ export default function MyPlantsScreen() {
                 style={styles.plantTouchable}
                 activeOpacity={0.7}
                 onPress={() =>
-                    router.push({
+                    router.navigate({
                         pathname: '/plantDetails',
                         params: {
                             id: item.id,
@@ -436,7 +435,7 @@ export default function MyPlantsScreen() {
                 <Text style={styles.headerText}>Your Plants</Text>
                 <TouchableOpacity
                     style={styles.headerButton}
-                    onPress={() => router.push('/addPlant')}
+                    onPress={() => router.navigate('/addPlant')}
                 >
                     <Ionicons
                         name="add-circle-outline"
