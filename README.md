@@ -67,17 +67,7 @@ Follow these steps to set up and run the app on your local environment.
 
     These variables are essential for backend communication and plant identification functionality.
 
-4. **Build the Application**
-
-    ```bash
-    npm run build
-    ```
-
-    This command uses Expo Application Services (EAS) to build the app. Ensure you are logged into your EAS account before proceeding.
-
-    Upon completion, a QR code and a download link will be provided. Use them to download the app to your desired device.
-
-5. **Start the Server**
+4. **Start the Server**
 
     Launch the Expo development server:
 
