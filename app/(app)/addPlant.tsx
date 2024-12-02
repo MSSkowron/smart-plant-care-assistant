@@ -72,8 +72,9 @@ export default function AddPlant() {
                 }
 
                 const result = await ImagePicker.launchImageLibraryAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    mediaTypes: ['images'],
                     allowsMultipleSelection: false,
+                    allowsEditing: true,
                     quality: 1,
                 })
 

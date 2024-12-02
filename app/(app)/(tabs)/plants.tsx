@@ -184,6 +184,7 @@ export default function MyPlantsScreen() {
 
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
+                allowsMultipleSelection: false,
                 allowsEditing: true,
                 quality: 1,
             })
