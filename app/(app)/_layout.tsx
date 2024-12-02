@@ -16,12 +16,15 @@ export default function AppLayout() {
                 name="camera"
                 options={{
                     headerShown: true,
-                    headerTitle: '',
-                    headerTransparent: true,
+                    headerTitle: 'Camera',
+                    headerTitleAlign: 'center',
+                    headerTransparent: false,
                     headerBackVisible: true,
-                    headerTintColor: 'white',
+                    headerTintColor: 'black',
                     headerBackTitleStyle: {
-                        fontSize: 16,
+                        fontWeight: 'bold',
+                        fontSize: 18,
+                        color: 'black',
                     },
                 }}
             />

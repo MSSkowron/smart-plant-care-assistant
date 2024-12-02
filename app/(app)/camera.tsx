@@ -33,6 +33,7 @@ export default function CameraComponent() {
     const [picture, setPicture] = useState<CameraCapturedPicture | undefined>()
     const [isCapturing, setIsCapturing] = useState(false)
     const { height, width } = useWindowDimensions()
+    console.log(height, width)
 
     const { updateImage } = useImage()
     const camera = useRef<CameraView | null>(null)
