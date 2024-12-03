@@ -126,7 +126,12 @@ export default function MyPlantsScreen() {
 
     const { scheduleNotifications, cancelNotifications } = useNotifications()
 
-    const { image, updateImage, clearImage } = useImage()
+    const {
+        plantHealthCheckImage,
+        updatePlantHealthCheckImage,
+        clearPlantHealthCheckImage,
+    } = useImage()
+
     const [modalVisible, setModalVisible] = useState(false)
     const [healthResult, setHealthResult] = useState<any>(null)
     const [healthModalVisible, setHealthModalVisible] = useState(false)
@@ -191,7 +196,7 @@ export default function MyPlantsScreen() {
 
             if (!result.canceled) {
                 const imageUri = result.assets[0].uri
-                updateImage(imageUri)
+                updatePlantHealthCheckImage(imageUri)
             }
         } else {
             router.navigate('/camera')
@@ -332,13 +337,13 @@ export default function MyPlantsScreen() {
     }
 
     useEffect(() => {
-        if (image) {
-            plantHealthAPI(image)
+        if (plantHealthCheckImage) {
+            plantHealthAPI(plantHealthCheckImage)
         }
-    }, [image])
+    }, [plantHealthCheckImage])
 
     useEffect(() => {
-        clearImage()
+        clearPlantHealthCheckImage()
 
         const fetch = async () => {
             await fetchPlants()

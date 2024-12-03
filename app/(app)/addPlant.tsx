@@ -38,7 +38,8 @@ export default function AddPlant() {
     const { session } = useAuth()
     const userID = session!.user.id
 
-    const { image, updateImage, clearImage } = useImage()
+    const { newPlantImage, updateNewPlantImage, clearNewPlantImage } =
+        useImage()
 
     const [loading, setLoading] = useState(false)
     const [plantData, setPlantData] = useState<plantData>({
@@ -49,14 +50,14 @@ export default function AddPlant() {
     })
 
     useEffect(() => {
-        clearImage() // when initializing component clear image
+        clearNewPlantImage()
     }, [])
 
     useEffect(() => {
-        if (image) {
-            identifyPlant(image)
+        if (newPlantImage) {
+            identifyPlant(newPlantImage)
         }
-    }, [image])
+    }, [newPlantImage])
 
     const handleImageSelection = async (source: 'camera' | 'gallery') => {
         try {
@@ -79,7 +80,7 @@ export default function AddPlant() {
                 })
 
                 if (!result.canceled) {
-                    updateImage(result.assets[0].uri)
+                    updateNewPlantImage(result.assets[0].uri)
                 }
             } else {
                 router.navigate('/camera')
@@ -171,7 +172,7 @@ export default function AddPlant() {
             !species ||
             !lightRequirements ||
             !wateringFrequency ||
-            !image
+            !newPlantImage
         ) {
             Alert.alert('Warning', 'Please fill all fields and add an image')
             return false
@@ -207,7 +208,7 @@ export default function AddPlant() {
                 await scheduleNotifications(data)
             }
 
-            await uploadImage(image!)
+            await uploadImage(newPlantImage!)
             Alert.alert('Success', 'Plant added successfully!', [
                 { text: 'OK', onPress: () => router.back() },
             ])
@@ -254,9 +255,9 @@ export default function AddPlant() {
                     </View>
 
                     <View style={styles.imageSection}>
-                        {image ? (
+                        {newPlantImage ? (
                             <Image
-                                source={{ uri: image }}
+                                source={{ uri: newPlantImage }}
                                 style={styles.previewImage}
                                 contentFit="contain"
                             />

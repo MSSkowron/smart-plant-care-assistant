@@ -18,14 +18,8 @@ import {
 } from 'react-native'
 import { icons } from '@/assets/icons'
 import { Image } from 'expo-image'
-import { router, useLocalSearchParams } from 'expo-router'
+import { router, useNavigation } from 'expo-router'
 import { useImage } from '@/store/hooks'
-
-const SCREEN_ROUTES = {
-    plants: '/(app)/(tabs)/plants',
-    addPlant: '/(app)/addPlant',
-    default: '/',
-} as const
 
 export default function CameraComponent() {
     const [facing, setFacing] = useState<CameraType>('back')
@@ -33,15 +27,12 @@ export default function CameraComponent() {
     const [picture, setPicture] = useState<CameraCapturedPicture | undefined>()
     const [isCapturing, setIsCapturing] = useState(false)
     const { height, width } = useWindowDimensions()
-    console.log(height, width)
-
-    const { updateImage } = useImage()
     const camera = useRef<CameraView | null>(null)
-    const { previousScreen } = useLocalSearchParams()
+    const { updateNewPlantImage, updatePlantHealthCheckImage } = useImage()
 
-    const previousScreenPath =
-        SCREEN_ROUTES[previousScreen as keyof typeof SCREEN_ROUTES] ||
-        SCREEN_ROUTES.default
+    const navigation = useNavigation()
+    const previousScreenName =
+        navigation.getState().routes[navigation.getState().index - 1].name
 
     const handleTakePicture = useCallback(async () => {
         if (!camera.current || isCapturing) return
@@ -73,10 +64,18 @@ export default function CameraComponent() {
 
     const handleSavePicture = useCallback(() => {
         if (picture?.uri) {
-            updateImage(picture.uri)
+            const pictureURI = picture.uri
+            switch (previousScreenName) {
+                case '(tabs)':
+                    updatePlantHealthCheckImage(pictureURI)
+                    break
+                case 'addPlant':
+                    updateNewPlantImage(pictureURI)
+                    break
+            }
             router.back()
         }
-    }, [picture, updateImage])
+    }, [picture, updateNewPlantImage, updatePlantHealthCheckImage])
 
     const handleRetake = useCallback(() => {
         setPicture(undefined)
