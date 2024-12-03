@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingBottom: Platform.OS === 'ios' ? 20 : 40,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 60,
         paddingHorizontal: 20,
     },
     controlButton: {
@@ -267,6 +267,7 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
         paddingHorizontal: 16,
         backgroundColor: '#000',
+        paddingBottom: Platform.OS === 'ios' ? 40 : 60,
     },
     previewButton: {
         flex: 1,
