@@ -21,7 +21,7 @@ import {
     COLOR_TEXT_SECONDARY,
 } from '@/assets/colors'
 import { getNextWateringDate } from '@/utils/utils'
-import { useNotifications } from '@/hooks/useNotification'
+import { useNotifications } from '@/contextes/useNotification'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 

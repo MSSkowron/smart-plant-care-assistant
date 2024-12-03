@@ -1,12 +1,32 @@
-import { useEffect, useCallback, useState } from 'react'
+import React, {
+    createContext,
+    useEffect,
+    useCallback,
+    useState,
+    useContext,
+} from 'react'
 import * as Notifications from 'expo-notifications'
 import { Platform } from 'react-native'
 import { Plant, supabase } from '@/utils/supabase'
 import { useAuth } from '@/contextes/AuthContext'
 import { NotificationState, NotificationData } from '@/types/notifications'
 import NotificationsService from '@/services/NotificationsService'
+import { NotificationRequest } from 'expo-notifications'
 
-export const useNotifications = () => {
+interface NotificationsContextProps {
+    scheduleNotifications: (plant: Plant) => Promise<void>
+    cancelNotifications: (plantId: number) => Promise<void>
+    notificationState: NotificationState
+    getState: (plant: Plant) => Promise<NotificationRequest[]>
+}
+
+const NotificationsContext = createContext<
+    NotificationsContextProps | undefined
+>(undefined)
+
+export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
+    children,
+}) => {
     const [notificationState, setNotificationState] =
         useState<NotificationState>({
             enabled: false,
@@ -16,7 +36,6 @@ export const useNotifications = () => {
 
     const { user } = useAuth()
 
-    // Handle incoming notifications
     const handleNotificationReceived = useCallback(
         (notification: Notifications.Notification) => {
             console.log('Notification received:', notification)
@@ -24,7 +43,6 @@ export const useNotifications = () => {
         [],
     )
 
-    // Handle notification responses with improved error handling
     const handleNotificationResponse = useCallback(
         async (response: Notifications.NotificationResponse) => {
             try {
@@ -49,7 +67,6 @@ export const useNotifications = () => {
         [],
     )
 
-    // Initialize notifications with proper error handling
     const initializeNotifications = useCallback(async () => {
         if (Platform.OS === 'web') return
 
@@ -74,7 +91,6 @@ export const useNotifications = () => {
         }
     }, [handleNotificationReceived, handleNotificationResponse])
 
-    // Handle marking a plant as watered
     const handleMarkWatered = async (plantId: string) => {
         try {
             const now = new Date().toISOString()
@@ -85,7 +101,6 @@ export const useNotifications = () => {
 
             if (error) throw error
 
-            // Fetch updated plant data
             const { data: plant, error: fetchError } = await supabase
                 .from('plants')
                 .select('*')
@@ -103,7 +118,6 @@ export const useNotifications = () => {
         }
     }
 
-    // Handle reminding later
     const handleRemindLater = async (
         plantId: string,
         notificationType: string,
@@ -131,7 +145,6 @@ export const useNotifications = () => {
         }
     }
 
-    // Schedule notifications for a plant with improved error handling
     const scheduleNotifications = async (plant: Plant) => {
         try {
             await NotificationsService.scheduleWateringNotifications({
@@ -144,7 +157,6 @@ export const useNotifications = () => {
         }
     }
 
-    // Cancel notifications for a plant
     const cancelNotifications = async (plantId: number) => {
         try {
             await NotificationsService.cancelPlantNotifications(plantId)
@@ -154,19 +166,38 @@ export const useNotifications = () => {
         }
     }
 
-    // Setup and cleanup notifications
+    const getState = async (plant: Plant) => {
+        return await NotificationsService.getScheduledNotifications(plant.id)
+    }
+
     useEffect(() => {
         initializeNotifications()
 
         return () => {
-            // NotificationsService will handle the cleanup of listeners
             NotificationsService.cleanup()
         }
     }, [user, initializeNotifications])
 
-    return {
-        scheduleNotifications,
-        cancelNotifications,
-        notificationState,
+    return (
+        <NotificationsContext.Provider
+            value={{
+                scheduleNotifications,
+                cancelNotifications,
+                notificationState,
+                getState,
+            }}
+        >
+            {children}
+        </NotificationsContext.Provider>
+    )
+}
+
+export const useNotifications = () => {
+    const context = useContext(NotificationsContext)
+    if (!context) {
+        throw new Error(
+            'useNotifications must be used within a NotificationsProvider',
+        )
     }
+    return context
 }
