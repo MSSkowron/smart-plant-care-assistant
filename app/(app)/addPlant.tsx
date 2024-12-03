@@ -19,7 +19,7 @@ import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import { useImage } from '@/store/hooks'
 import { COLOR_PRIMARY } from '@/assets/colors'
-import { useNotifications } from '@/hooks/useNotification'
+import { useNotifications } from '@/contextes/useNotification'
 
 interface plantData {
     name: string | undefined

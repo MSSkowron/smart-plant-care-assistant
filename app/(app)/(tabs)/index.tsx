@@ -15,7 +15,7 @@ import { router } from 'expo-router'
 import { Plant, supabase } from '@/utils/supabase'
 import { getNextWateringDate } from '@/utils/utils'
 import { format } from 'date-fns'
-import { useNotifications } from '@/hooks/useNotification'
+import { useNotifications } from '@/contextes/useNotification'
 
 export default function HomeScreen() {
     const { scheduleNotifications, cancelNotifications, notificationState } =

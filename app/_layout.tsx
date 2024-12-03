@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contextes/AuthContext'
 import { ActivityIndicator, View } from 'react-native'
 import { store } from '@/store/store'
 import { Provider } from 'react-redux'
+import { NotificationsProvider } from '@/contextes/useNotification'
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
@@ -37,21 +38,26 @@ export default function RootLayout() {
                     setSessionInitialized(true)
                 }}
             >
-                <ThemeProvider value={DefaultTheme}>
-                    {sessionInitialized ? (
-                        <Slot />
-                    ) : (
-                        <View
-                            style={{
-                                flex: 1,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <ActivityIndicator size="large" color={'#228B22'} />
-                        </View>
-                    )}
-                </ThemeProvider>
+                <NotificationsProvider>
+                    <ThemeProvider value={DefaultTheme}>
+                        {sessionInitialized ? (
+                            <Slot />
+                        ) : (
+                            <View
+                                style={{
+                                    flex: 1,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <ActivityIndicator
+                                    size="large"
+                                    color={'#228B22'}
+                                />
+                            </View>
+                        )}
+                    </ThemeProvider>
+                </NotificationsProvider>
             </AuthProvider>
         </Provider>
     )
