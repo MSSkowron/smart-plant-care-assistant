@@ -1,25 +1,39 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export interface ImageState {
-    value: string | undefined
+    plantHealthCheckImage: string | undefined
+    newPlantImage: string | undefined
 }
 
 const initialState: ImageState = {
-    value: undefined,
+    plantHealthCheckImage: undefined,
+    newPlantImage: undefined,
 }
 
 export const imageSlice = createSlice({
     name: 'image',
     initialState,
     reducers: {
-        setImage: (state, action: PayloadAction<string>) => {
-            state.value = action.payload
+        setPlantHealthCheckImage: (state, action: PayloadAction<string>) => {
+            state.plantHealthCheckImage = action.payload
         },
-        unsetImage: (state) => {
-            state.value = undefined
+        unsetPlantHealthCheckImage: (state) => {
+            state.plantHealthCheckImage = undefined
+        },
+        setNewPlantImage: (state, action: PayloadAction<string>) => {
+            state.newPlantImage = action.payload
+        },
+        unsetNewPlantImage: (state) => {
+            state.newPlantImage = undefined
         },
     },
 })
 
-export const { setImage, unsetImage } = imageSlice.actions
+export const {
+    setPlantHealthCheckImage,
+    unsetPlantHealthCheckImage,
+    setNewPlantImage,
+    unsetNewPlantImage,
+} = imageSlice.actions
+
 export default imageSlice.reducer
