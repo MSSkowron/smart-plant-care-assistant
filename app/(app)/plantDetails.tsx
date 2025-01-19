@@ -315,8 +315,15 @@ export default function PlantDetails() {
                             style={[styles.actionButton, styles.editButton]}
                             onPress={() =>
                                 router.navigate({
-                                    pathname: '/', // TODO: Implement
-                                    params: { id },
+                                    pathname: '/EditPlant',
+                                    params: {
+                                        id: id,
+                                        name: name,
+                                        species: species,
+                                        lightRequirements: lightRequirements,
+                                        wateringFrequency: wateringFrequency,
+                                        image: image,
+                                    },
                                 })
                             }
                         >
@@ -349,6 +356,7 @@ const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
         backgroundColor: '#F5F7FA',
+        marginBottom: 30,
     },
     container: {
         flex: 1,

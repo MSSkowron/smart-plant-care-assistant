@@ -23,6 +23,7 @@ export default function HomeScreen() {
     const { user } = useAuth()
     const [plants, setPlants] = useState<Plant[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(true)
+    const welcomeMsg = `Welcome, ${user?.email.split('@')[0]}!`
 
     const handleWaterPlant = async (plant: Plant) => {
         const nextWatering = getNextWateringDate(
@@ -181,7 +182,7 @@ export default function HomeScreen() {
                         numberOfLines={2}
                         ellipsizeMode="tail"
                     >
-                        Welcome, {user?.email}!
+                        {welcomeMsg ?? 'Welcome back!'}
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.headerButton}>
