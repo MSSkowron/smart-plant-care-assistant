@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Picker } from '@react-native-picker/picker'
 import {
     View,
     TextInput,
@@ -21,7 +22,7 @@ import { useImage } from '@/store/hooks'
 import { COLOR_PRIMARY } from '@/assets/colors'
 import { useNotifications } from '@/contextes/useNotification'
 
-interface plantData {
+export interface plantData {
     name: string | undefined
     species: string | undefined
     lightRequirements: string | undefined
@@ -45,7 +46,7 @@ export default function AddPlant() {
     const [plantData, setPlantData] = useState<plantData>({
         name: undefined,
         species: undefined,
-        lightRequirements: undefined,
+        lightRequirements: 'Low',
         wateringFrequency: undefined,
     })
 
@@ -120,14 +121,13 @@ export default function AddPlant() {
             }
 
             const data = await response.json()
-            const family =
+            const name =
+                data.results[0].species.commonNames[0] ??
                 data.results[0].species.family.scientificNameWithoutAuthor
-            const genus =
-                data.results[0].species.genus.scientificNameWithoutAuthor
 
             setPlantData((prev) => ({
                 ...prev,
-                species: `${family} - ${genus}`,
+                species: `${name}`,
             }))
         } catch (error) {
             handleError(error)
@@ -229,7 +229,6 @@ export default function AddPlant() {
     const fields = [
         { label: 'Plant Name', key: 'name' },
         { label: 'Species', key: 'species' },
-        { label: 'Light Requirements', key: 'lightRequirements' },
         { label: 'Watering Frequency (days)', key: 'wateringFrequency' },
     ] as const
 
@@ -323,6 +322,33 @@ export default function AddPlant() {
                                 />
                             </View>
                         ))}
+                        <View>
+                            <Text style={styles.label}>Light Requirements</Text>
+                            <View
+                                style={
+                                    (styles.inputContainer,
+                                    styles.light_requirements)
+                                }
+                            >
+                                <Picker
+                                    itemStyle={styles.input}
+                                    selectedValue={'Low'}
+                                    onValueChange={(itemValue, itemIndex) =>
+                                        handleInputChange(
+                                            'lightRequirements',
+                                            itemValue,
+                                        )
+                                    }
+                                >
+                                    <Picker.Item label="Low" value="Low" />
+                                    <Picker.Item
+                                        label="Moderate"
+                                        value="Moderate"
+                                    />
+                                    <Picker.Item label="High" value="High" />
+                                </Picker>
+                            </View>
+                        </View>
 
                         <TouchableOpacity
                             style={styles.submitButton}
@@ -500,5 +526,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
+    },
+    light_requirements: {
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 10,
     },
 })
